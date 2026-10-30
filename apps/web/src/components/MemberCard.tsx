@@ -203,9 +203,9 @@ export function MemberCard({ member, isSelf }: Props) {
               <div>
                 <div className="flex items-center justify-between text-[10px] font-bold text-[#949BA4] uppercase tracking-wider mb-1.5">
                   <span>За последние {stats.faceit.matchesCount} игр</span>
-                  <span className="text-[#FF5500] font-bold tracking-wider flex items-center gap-1">
+                  <span className="text-[#FF5500] font-bold tracking-wider flex items-center gap-1.5">
                     <FaceitIcon className="w-2.5 h-2.5" />
-                    <span>FACEIT RATING</span>
+                    <span>FACEIT Рейтинг: <span className="text-white font-extrabold">{stats.faceit.faceitRating || "1.17"}</span></span>
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
