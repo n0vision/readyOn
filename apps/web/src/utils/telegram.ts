@@ -1,62 +1,84 @@
 /**
  * Telegram WebApp Fullscreen, Safe Areas & Viewport Setup
+ * Fullscreen mode is strictly restricted to mobile devices (iOS / Android).
+ * Desktop clients (tdesktop, macos, web) use standard windowed view without full screen takeover.
  */
+
+export function isMobileDevice(tg?: any): boolean {
+  if (tg?.platform) {
+    const platform = String(tg.platform).toLowerCase();
+    if (["ios", "android", "android_x"].includes(platform)) return true;
+    if (["tdesktop", "macos", "web", "weba", "webk"].includes(platform)) return false;
+  }
+
+  if (typeof navigator !== "undefined") {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
+  return false;
+}
 
 export function initTelegramFullscreen() {
   try {
     const tg = (window as any).Telegram?.WebApp;
     if (!tg) return;
 
-    // Signal readiness
+    // Signal readiness to Telegram
     tg.ready?.();
-
-    // Expand to full available height
-    tg.expand?.();
-
-    // Request true Fullscreen in Telegram WebApp 8.0+
-    if (typeof tg.requestFullscreen === "function") {
-      tg.requestFullscreen();
-    }
-
-    // Prevent vertical gestures from pulling down/closing the mini app during scroll
-    if (typeof tg.disableVerticalSwipes === "function") {
-      tg.disableVerticalSwipes();
-    }
 
     // Set Discord Slate chrome colors
     tg.setHeaderColor?.("#1E1F22");
     tg.setBackgroundColor?.("#1E1F22");
 
-    // Dynamic Safe Area Synchronization
-    const updateSafeAreas = () => {
-      // contentSafeAreaInset includes Telegram's floating [✕ Закрыть] and [⋮] buttons
-      const contentTop =
-        tg.contentSafeAreaInset?.top ??
-        tg.safeAreaInset?.top ??
-        0;
+    const isMobile = isMobileDevice(tg);
 
-      const contentBottom =
-        tg.contentSafeAreaInset?.bottom ??
-        tg.safeAreaInset?.bottom ??
-        0;
+    if (isMobile) {
+      // Mobile-only: expand and request full screen
+      tg.expand?.();
 
-      // In Telegram Fullscreen, floating header controls take at least 56-64px
-      // Adding +10px extra margin as requested to eliminate any iPhone notch/Dynamic Island overlap
-      const isFullscreen = tg.isFullscreen || typeof tg.requestFullscreen === "function";
-      const baseTop = Math.max(contentTop, isFullscreen ? 70 : 0);
-      const effectiveTop = baseTop + 10;
+      if (typeof tg.requestFullscreen === "function") {
+        tg.requestFullscreen();
+      }
 
-      document.documentElement.style.setProperty("--app-safe-top", `${effectiveTop}px`);
-      document.documentElement.style.setProperty("--app-safe-bottom", `${contentBottom}px`);
-    };
+      if (typeof tg.disableVerticalSwipes === "function") {
+        tg.disableVerticalSwipes();
+      }
 
-    updateSafeAreas();
+      // Dynamic Safe Area Synchronization for Mobile
+      const updateMobileSafeAreas = () => {
+        const contentTop =
+          tg.contentSafeAreaInset?.top ??
+          tg.safeAreaInset?.top ??
+          0;
 
-    // Listen to Telegram events
-    tg.onEvent?.("safeAreaChanged", updateSafeAreas);
-    tg.onEvent?.("contentSafeAreaChanged", updateSafeAreas);
-    tg.onEvent?.("fullscreenChanged", updateSafeAreas);
-    tg.onEvent?.("viewportChanged", updateSafeAreas);
+        const contentBottom =
+          tg.contentSafeAreaInset?.bottom ??
+          tg.safeAreaInset?.bottom ??
+          0;
+
+        const isFullscreen = tg.isFullscreen || typeof tg.requestFullscreen === "function";
+        const baseTop = Math.max(contentTop, isFullscreen ? 70 : 0);
+        const effectiveTop = baseTop + 10; // Extra +10px buffer for iPhone notch/island
+
+        document.documentElement.style.setProperty("--app-safe-top", `${effectiveTop}px`);
+        document.documentElement.style.setProperty("--app-safe-bottom", `${contentBottom}px`);
+      };
+
+      updateMobileSafeAreas();
+
+      tg.onEvent?.("safeAreaChanged", updateMobileSafeAreas);
+      tg.onEvent?.("contentSafeAreaChanged", updateMobileSafeAreas);
+      tg.onEvent?.("fullscreenChanged", updateMobileSafeAreas);
+      tg.onEvent?.("viewportChanged", updateMobileSafeAreas);
+    } else {
+      // Desktop: exit fullscreen if accidentally active and clear safe-area insets
+      if (typeof tg.exitFullscreen === "function" && tg.isFullscreen) {
+        tg.exitFullscreen();
+      }
+
+      document.documentElement.style.setProperty("--app-safe-top", "0px");
+      document.documentElement.style.setProperty("--app-safe-bottom", "0px");
+    }
   } catch (err) {
     console.warn("Telegram WebApp fullscreen init error:", err);
   }
