@@ -12,14 +12,19 @@ export interface SteamPlayerSummary {
 }
 
 export class SteamService {
-  private apiKey: string | null;
+  private explicitKey: string | null;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.STEAM_API_KEY || null;
+    this.explicitKey = apiKey || null;
+  }
+
+  get key(): string | null {
+    return this.explicitKey || process.env.STEAM_API_KEY || null;
   }
 
   public isConfigured(): boolean {
-    return Boolean(this.apiKey && this.apiKey.trim().length > 0);
+    const k = this.key;
+    return Boolean(k && k.trim().length > 0);
   }
 
   /**
@@ -47,13 +52,14 @@ export class SteamService {
       vanity = idMatch[1];
     }
 
-    if (!this.apiKey) {
+    const k = this.key;
+    if (!k) {
       // Without API key, can only accept pure 17-digit SteamID64
       return /^7656\d{13}$/.test(vanity) ? vanity : null;
     }
 
     try {
-      const url = `https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${this.apiKey}&vanityurl=${encodeURIComponent(
+      const url = `https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${k}&vanityurl=${encodeURIComponent(
         vanity
       )}`;
       const res = await fetch(url);
@@ -74,11 +80,12 @@ export class SteamService {
    */
   async getPlayerSummaries(steamIds: string[]): Promise<Map<string, SteamPlayerSummary>> {
     const result = new Map<string, SteamPlayerSummary>();
-    if (!this.apiKey || steamIds.length === 0) return result;
+    const k = this.key;
+    if (!k || steamIds.length === 0) return result;
 
     try {
       const idsParam = steamIds.join(",");
-      const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${this.apiKey}&steamids=${idsParam}`;
+      const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${k}&steamids=${idsParam}`;
       const res = await fetch(url);
       if (!res.ok) return result;
 

@@ -32,7 +32,6 @@ export class GamingStatusPoller {
     this.isRunning = true;
 
     try {
-      // Find all users with any gaming integration linked
       const users = await prisma.user.findMany({
         where: {
           OR: [
@@ -48,17 +47,22 @@ export class GamingStatusPoller {
         return;
       }
 
-      // 1. Steam updates
+      // Query external APIs concurrently with error boundaries
       const steamUsers = users.filter((u) => u.steamId);
-      const steamSummaries =
+      const steamPromise =
         steamService.isConfigured() && steamUsers.length > 0
-          ? await steamService.getPlayerSummaries(steamUsers.map((u) => u.steamId as string))
-          : new Map();
+          ? steamService.getPlayerSummaries(steamUsers.map((u) => u.steamId as string))
+          : Promise.resolve(new Map());
 
-      // 2. TeamSpeak clients
-      const tsClients = teamspeakService.isConfigured()
-        ? await teamspeakService.getConnectedClients()
-        : [];
+      const tsPromise = teamspeakService.isConfigured()
+        ? teamspeakService.getConnectedClients()
+        : Promise.resolve([]);
+
+      const [steamResult, tsResult] = await Promise.allSettled([steamPromise, tsPromise]);
+
+      const steamSummaries =
+        steamResult.status === "fulfilled" ? steamResult.value : new Map();
+      const tsClients = tsResult.status === "fulfilled" ? tsResult.value : [];
 
       // Process each user
       for (const user of users) {
@@ -79,12 +83,16 @@ export class GamingStatusPoller {
 
         // Process FACEIT (if configured and linked)
         if (user.faceitId && faceitService.isConfigured()) {
-          const faceitData = await faceitService.getPlayerByNickname(user.faceitId);
-          if (faceitData) {
-            faceitElo = faceitData.elo;
-            faceitLevel = faceitData.level;
-            const inMatch = await faceitService.getActiveMatch(faceitData.playerId);
-            faceitStatus = inMatch ? "in_match" : faceitData.status;
+          try {
+            const faceitData = await faceitService.getPlayerByNickname(user.faceitId);
+            if (faceitData) {
+              faceitElo = faceitData.elo;
+              faceitLevel = faceitData.level;
+              const inMatch = await faceitService.getActiveMatch(faceitData.playerId);
+              faceitStatus = inMatch ? "in_match" : faceitData.status;
+            }
+          } catch (e) {
+            // Ignore Faceit timeout/error
           }
         }
 

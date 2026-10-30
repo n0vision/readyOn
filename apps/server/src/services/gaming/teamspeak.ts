@@ -13,22 +13,25 @@ export interface TS3Client {
 }
 
 export class TeamSpeakService {
-  private host: string | null;
-  private queryPort: number;
-  private serverPort: number;
-  private queryUser: string | null;
-  private queryPass: string | null;
-
-  constructor() {
-    this.host = process.env.TS3_HOST || null;
-    this.queryPort = parseInt(process.env.TS3_QUERY_PORT || "10011", 10);
-    this.serverPort = parseInt(process.env.TS3_SERVER_PORT || "9987", 10);
-    this.queryUser = process.env.TS3_QUERY_USER || null;
-    this.queryPass = process.env.TS3_QUERY_PASSWORD || null;
+  get host(): string | null {
+    return process.env.TS3_HOST || null;
+  }
+  get queryPort(): number {
+    return parseInt(process.env.TS3_QUERY_PORT || "10011", 10);
+  }
+  get serverPort(): number {
+    return parseInt(process.env.TS3_SERVER_PORT || "9987", 10);
+  }
+  get queryUser(): string | null {
+    return process.env.TS3_QUERY_USER || null;
+  }
+  get queryPass(): string | null {
+    return process.env.TS3_QUERY_PASSWORD || null;
   }
 
   public isConfigured(): boolean {
-    return Boolean(this.host && this.host.trim().length > 0);
+    const h = this.host;
+    return Boolean(h && h.trim().length > 0);
   }
 
   /**
@@ -39,54 +42,59 @@ export class TeamSpeakService {
 
     return new Promise((resolve) => {
       const socket = new net.Socket();
-      socket.setTimeout(4000);
+      socket.setTimeout(2500);
 
       let buffer = "";
       const clients: TS3Client[] = [];
       const channels = new Map<number, string>();
 
+      let step = "WAIT_BANNER"; // WAIT_BANNER -> WAIT_USE -> WAIT_CHANNELS -> WAIT_CLIENTS -> DONE
+
       const cleanup = () => {
-        socket.destroy();
+        try {
+          socket.destroy();
+        } catch {}
+        resolve(clients);
       };
 
-      socket.on("timeout", () => {
-        cleanup();
-        resolve(clients);
-      });
-
+      socket.on("timeout", cleanup);
       socket.on("error", (err) => {
-        console.warn("TS3 ServerQuery connection error:", err.message);
+        console.warn("TS3 ServerQuery error:", err.message);
         cleanup();
-        resolve(clients);
       });
-
-      let state = 0; // 0 = welcome, 1 = login/select, 2 = channellist, 3 = clientlist
 
       socket.connect(this.queryPort, this.host!, () => {
         // Connected
       });
 
-      socket.on("data", (data) => {
-        buffer += data.toString("utf-8");
+      socket.on("data", (chunk) => {
+        buffer += chunk.toString("utf-8");
 
-        if (buffer.includes("TS3\n\r") || buffer.includes("Welcome to the TeamSpeak 3")) {
-          if (state === 0) {
-            state = 1;
-            // Select virtual server
-            socket.write(`use port=${this.serverPort}\n`);
-            if (this.queryUser && this.queryPass) {
-              socket.write(`login ${this.queryUser} ${this.queryPass}\n`);
+        // Process line by line
+        while (buffer.includes("\n")) {
+          const newlineIdx = buffer.indexOf("\n");
+          const line = buffer.slice(0, newlineIdx).replace(/\r$/, "");
+          buffer = buffer.slice(newlineIdx + 1);
+
+          if (!line.trim()) continue;
+
+          if (step === "WAIT_BANNER") {
+            if (line.includes("Welcome to the TeamSpeak 3")) {
+              step = "WAIT_USE";
+              socket.write(`use port=${this.serverPort}\n\r`);
             }
-            socket.write("channellist\n");
-            socket.write("clientlist -voice\n");
-            socket.write("quit\n");
-          }
-        }
-
-        // Parse channels
-        if (buffer.includes("cid=")) {
-          const lines = buffer.split("\n\r");
-          for (const line of lines) {
+          } else if (step === "WAIT_USE") {
+            if (line.startsWith("error id=")) {
+              if (line.includes("id=0")) {
+                step = "WAIT_CHANNELS";
+                socket.write("channellist\n\r");
+              } else {
+                console.warn("TS3 select server error:", line);
+                cleanup();
+                return;
+              }
+            }
+          } else if (step === "WAIT_CHANNELS") {
             if (line.includes("cid=") && line.includes("channel_name=")) {
               const entries = line.split("|");
               for (const entry of entries) {
@@ -96,15 +104,17 @@ export class TeamSpeakService {
                   channels.set(parseInt(cidMatch[1], 10), decodeTS(nameMatch[1]));
                 }
               }
+            } else if (line.startsWith("error id=")) {
+              step = "WAIT_CLIENTS";
+              socket.write("clientlist -voice\n\r");
             }
-
-            // Parse clients
+          } else if (step === "WAIT_CLIENTS") {
             if (line.includes("clid=") && line.includes("client_nickname=")) {
               const entries = line.split("|");
               for (const entry of entries) {
                 const typeMatch = entry.match(/client_type=(\d+)/);
-                // client_type=0 is human player (not serverquery)
-                if (typeMatch && typeMatch[1] === "0") {
+                // client_type=0 is normal user (not query)
+                if (!typeMatch || typeMatch[1] === "0") {
                   const nickMatch = entry.match(/client_nickname=([^\s]+)/);
                   const cidMatch = entry.match(/cid=(\d+)/);
                   const muteMatch = entry.match(/client_input_muted=(\d+)/);
@@ -120,6 +130,11 @@ export class TeamSpeakService {
                   }
                 }
               }
+            } else if (line.startsWith("error id=")) {
+              step = "DONE";
+              socket.write("quit\n\r");
+              cleanup();
+              return;
             }
           }
         }
