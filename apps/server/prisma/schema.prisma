@@ -133,6 +133,8 @@ model Group {
   ownerId    Int      @map("owner_id")
   avatarUrl  String?  @map("avatar_url")
   maxMembers Int      @default(10) @map("max_members")
+  targetSize Int      @default(5) @map("target_size")
+  reminderHour Int    @default(17) @map("reminder_hour")
   
   createdAt  DateTime @default(now()) @map("created_at")
 

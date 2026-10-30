@@ -3,6 +3,7 @@ import { prisma } from "../../db/prisma.js";
 import { steamService } from "./steam.js";
 import { faceitService } from "./faceit.js";
 import { teamspeakService } from "./teamspeak.js";
+import { notificationEngine } from "../notification/engine.js";
 
 export class GamingStatusPoller {
   private isRunning: boolean = false;
@@ -131,6 +132,11 @@ export class GamingStatusPoller {
             tsChannel,
           },
         });
+
+        // Notify friends if user started CS2
+        if (steamGame && steamGame.toLowerCase().includes("counter-strike")) {
+          notificationEngine.notifyFriendStartedCS(user.id, steamGame).catch(() => {});
+        }
       }
     } catch (err) {
       console.error("Error during gaming poll cycle:", err);

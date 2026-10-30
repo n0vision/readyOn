@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { prisma } from "../db/prisma.js";
 import type { ReadyStatus } from "@prisma/client";
 import { getToday } from "../bot/commands/status.js";
+import { notificationEngine } from "../services/notification/engine.js";
 
 
 export const statusRoutes: FastifyPluginAsync = async (app) => {
@@ -57,6 +58,16 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
       update: { status, availableFrom, availableUntil, comment },
       create: { userId: user.id, date: today, status, availableFrom, availableUntil, comment },
     });
+
+    if (status === "READY") {
+      const userGroups = await prisma.groupMember.findMany({
+        where: { userId: user.id },
+        select: { groupId: true },
+      });
+      for (const g of userGroups) {
+        notificationEngine.checkGroupFullStack(g.groupId).catch(() => {});
+      }
+    }
 
     return dailyStatus;
   });

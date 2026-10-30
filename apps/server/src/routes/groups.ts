@@ -24,6 +24,8 @@ export const groupRoutes: FastifyPluginAsync = async (app) => {
       inviteCode: m.group.inviteCode,
       role: m.role,
       memberCount: m.group._count.members,
+      targetSize: m.group.targetSize,
+      reminderHour: m.group.reminderHour,
     }));
   });
 
@@ -78,5 +80,29 @@ export const groupRoutes: FastifyPluginAsync = async (app) => {
     });
 
     return { groupId: group.id, groupName: group.name, role: member.role };
+  });
+
+  // PATCH /api/groups/:groupId/settings — обновить настройки группы (размер пати, время опросника)
+  app.patch<{
+    Params: { groupId: string };
+    Body: { targetSize?: number; reminderHour?: number };
+  }>("/:groupId/settings", async (req, reply) => {
+    const groupId = parseInt(req.params.groupId, 10);
+    const { targetSize, reminderHour } = req.body;
+
+    const group = await prisma.group.update({
+      where: { id: groupId },
+      data: {
+        ...(targetSize !== undefined && { targetSize }),
+        ...(reminderHour !== undefined && { reminderHour }),
+      },
+    });
+
+    return {
+      id: group.id,
+      name: group.name,
+      targetSize: group.targetSize,
+      reminderHour: group.reminderHour,
+    };
   });
 };

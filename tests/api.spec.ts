@@ -61,4 +61,28 @@ test.describe("Backend REST API", () => {
     expect(getBody.dailyStatus.status).toBe("READY");
     expect(getBody.dailyStatus.availableFrom).toBe("20:00");
   });
+
+  test("PATCH /api/groups/:groupId/settings updates squad threshold and reminder hour", async ({
+    request,
+  }) => {
+    const patchRes = await request.patch(`${API_BASE}/api/groups/1/settings`, {
+      data: {
+        targetSize: 4,
+        reminderHour: 18,
+      },
+    });
+    expect(patchRes.status()).toBe(200);
+    const body = await patchRes.json();
+    expect(body.targetSize).toBe(4);
+    expect(body.reminderHour).toBe(18);
+
+    // Verify GET groups returns the updated settings
+    const groupsRes = await request.get(`${API_BASE}/api/groups/${TELEGRAM_ID}`);
+    expect(groupsRes.status()).toBe(200);
+    const groups = await groupsRes.json();
+    const g1 = groups.find((g: any) => g.id === 1);
+    expect(g1).toBeDefined();
+    expect(g1.targetSize).toBe(4);
+    expect(g1.reminderHour).toBe(18);
+  });
 });

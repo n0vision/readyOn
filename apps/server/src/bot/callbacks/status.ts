@@ -1,6 +1,7 @@
 import type { BotContext } from "../index.js";
 import { prisma } from "../../db/prisma.js";
 import type { ReadyStatus } from "@prisma/client";
+import { notificationEngine } from "../../services/notification/engine.js";
 import {
   STATUS_EMOJI,
   STATUS_TEXT,
@@ -39,6 +40,17 @@ export async function handleStatusCallback(ctx: BotContext) {
       availableFrom,
     },
   });
+
+  // Check if group full stack reached
+  if (status === "READY") {
+    const userGroups = await prisma.groupMember.findMany({
+      where: { userId: user.id },
+      select: { groupId: true },
+    });
+    for (const g of userGroups) {
+      notificationEngine.checkGroupFullStack(g.groupId).catch(() => {});
+    }
+  }
 
   const emoji = STATUS_EMOJI[status] || "🟢";
   const label = STATUS_TEXT[status] || "Готов";

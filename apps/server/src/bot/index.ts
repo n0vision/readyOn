@@ -5,6 +5,8 @@ import { menuCommand } from "./commands/menu.js";
 import { statusCommand } from "./commands/status.js";
 import { groupCommand, showGroupsWithInvites } from "./commands/group.js";
 import { linkCommand, unlinkCommand } from "./commands/link.js";
+import { pollCommand, handlePollCallback } from "./commands/poll.js";
+import { settingsCommand, handleSettingsCallback } from "./commands/settings.js";
 import { handleStatusCallback, handleGroupStatusRefresh } from "./callbacks/status.js";
 import { handleLocationUpdate } from "./handlers/location.js";
 import { prisma } from "../db/prisma.js";
@@ -19,8 +21,10 @@ export type BotContext = Context & SessionFlavor<SessionData>;
 export const BOT_COMMANDS = [
   { command: "menu", description: "Главное меню с кнопками" },
   { command: "status", description: "Кто сегодня готов играть" },
+  { command: "poll", description: "Разослать опросник готовности пацанам" },
   { command: "group", description: "Твоя группа и ссылка-инвайт" },
-  { command: "link", description: "Привязать Steam / FACEIT / TeamSpeak" },
+  { command: "settings", description: "Настройки группы и напоминалок" },
+  { command: "link", description: "Привязать Steam / FACEIT" },
   { command: "ready", description: "Отметить готовность (🟢)" },
   { command: "maybe", description: "Маловероятно / попозже (🟡)" },
   { command: "busy", description: "Сегодня никак не могу (🔴)" },
@@ -54,10 +58,14 @@ export function createBot(): Bot<BotContext> | null {
   bot.command("group", groupCommand);
   bot.command("link", linkCommand);
   bot.command("unlink", unlinkCommand);
+  bot.command("poll", pollCommand);
+  bot.command("settings", settingsCommand);
 
   // Inline keyboard callbacks
   bot.callbackQuery(/^status:/, handleStatusCallback);
   bot.callbackQuery(/^groups:status:/, handleGroupStatusRefresh);
+  bot.callbackQuery(/^poll:/, handlePollCallback);
+  bot.callbackQuery(/^set:/, handleSettingsCallback);
 
   bot.callbackQuery("nav:menu", async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -105,7 +113,7 @@ export function createBot(): Bot<BotContext> | null {
     await ctx.reply("Нажми кнопку ниже, чтобы открыть Mini App:", { reply_markup: keyboard });
   });
 
-  // Fallback for any other callback query (to prevent infinite button loading)
+  // Fallback for any other callback query
   bot.on("callback_query", async (ctx) => {
     await ctx.answerCallbackQuery();
   });
