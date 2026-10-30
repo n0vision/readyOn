@@ -174,23 +174,28 @@ export function Groups() {
                   </div>
                 </div>
 
-                {/* Group Settings Inside Card */}
-                <div className="pt-3 border-t border-white/5 space-y-2.5">
+                {/* Group Settings Inside Card (Enlarged for mobile comfort: h-11, 44px) */}
+                <div className="pt-3.5 border-t border-white/5 space-y-3.5">
                   {/* Squad Target Size */}
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#949BA4] flex items-center gap-1.5 font-medium">
-                      <Target className="w-3.5 h-3.5 text-[#8BA4CC]" />
-                      <span>Порог команды:</span>
-                    </span>
-                    <div className="flex items-center gap-1 bg-[#1E1F22] p-1 rounded-xl border border-white/5">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#949BA4] flex items-center gap-1.5 font-medium">
+                        <Target className="w-4 h-4 text-[#8BA4CC]" />
+                        <span>Порог команды:</span>
+                      </span>
+                      <span className="text-[11px] text-[#8BA4CC] font-semibold">
+                        {g.targetSize || 5} игроков для сбора
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 bg-[#1E1F22] p-1.5 rounded-xl border border-white/5">
                       {[3, 4, 5].map((size) => (
                         <button
                           key={size}
                           onClick={() => handleUpdateTargetSize(g.id, size)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                          className={`h-11 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
                             (g.targetSize || 5) === size
-                              ? "bg-[#3F5F96] text-white font-bold shadow-xs"
-                              : "text-[#DBDEE1]/60 hover:text-white"
+                              ? "bg-[#3F5F96] text-white shadow-xs"
+                              : "text-[#DBDEE1]/70 hover:text-white hover:bg-white/5"
                           }`}
                         >
                           {size} чел
@@ -200,20 +205,25 @@ export function Groups() {
                   </div>
 
                   {/* Evening Reminder Hour */}
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#949BA4] flex items-center gap-1.5 font-medium">
-                      <Clock className="w-3.5 h-3.5 text-[#8BA4CC]" />
-                      <span>Вечерний опрос:</span>
-                    </span>
-                    <div className="flex items-center gap-1 bg-[#1E1F22] p-1 rounded-xl border border-white/5">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#949BA4] flex items-center gap-1.5 font-medium">
+                        <Clock className="w-4 h-4 text-[#8BA4CC]" />
+                        <span>Вечерний опрос:</span>
+                      </span>
+                      <span className="text-[11px] text-[#8BA4CC] font-semibold">
+                        В {g.reminderHour || 18}:00 каждый день
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 bg-[#1E1F22] p-1.5 rounded-xl border border-white/5">
                       {[16, 17, 18, 19].map((hour) => (
                         <button
                           key={hour}
                           onClick={() => handleUpdateReminderHour(g.id, hour)}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                          className={`h-11 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
                             (g.reminderHour || 18) === hour
-                              ? "bg-[#3F5F96] text-white font-bold shadow-xs"
-                              : "text-[#DBDEE1]/60 hover:text-white"
+                              ? "bg-[#3F5F96] text-white shadow-xs"
+                              : "text-[#DBDEE1]/70 hover:text-white hover:bg-white/5"
                           }`}
                         >
                           {hour}:00

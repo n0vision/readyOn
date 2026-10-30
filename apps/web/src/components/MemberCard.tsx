@@ -25,23 +25,23 @@ export function MemberCard({ member, isSelf }: Props) {
     }
   };
 
-  // Subtitle text: when UNLIKELY ("Возможно"), strictly no time is shown
+  // Subtitle text: all statuses are cleanly color-coded to match their status dots
   const renderSubtitle = () => {
     switch (status) {
       case "READY":
         return (
-          <span className="text-[#DBDEE1]/80 font-medium">
+          <span className="text-[#23A55A] font-semibold">
             {member.dailyStatus?.availableFrom
               ? `Готов с ${member.dailyStatus.availableFrom}`
               : "Готов прямо сейчас"}
           </span>
         );
       case "UNLIKELY":
-        return <span className="text-[#F0B232] font-medium">Возможно</span>;
+        return <span className="text-[#F0B232] font-semibold">Возможно</span>;
       case "UNAVAILABLE":
-        return <span className="text-[#949BA4] font-medium">Не смогу</span>;
+        return <span className="text-[#F23F43] font-semibold">Не смогу</span>;
       default:
-        return <span className="text-[#949BA4]">Не в сети</span>;
+        return <span className="text-[#80848E] font-medium">Не в сети</span>;
     }
   };
 
@@ -87,27 +87,27 @@ export function MemberCard({ member, isSelf }: Props) {
         {/* Gaming Chips */}
         {os && (
           <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-            {/* Steam badge with brand color */}
+            {/* Steam badge with brand icon and crisp white text */}
             {os.steamStatus === "in_game" || os.steamGame ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-semibold text-[#8BA4CC]">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-semibold text-white/90">
                 <SteamIcon className="w-3 h-3" />
                 <span>{os.steamGame || "В CS2"}</span>
               </span>
             ) : os.steamStatus === "online" ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-medium text-[#8BA4CC]/80">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-medium text-white/90">
                 <SteamIcon className="w-3 h-3" />
                 <span>В сети</span>
               </span>
             ) : null}
 
-            {/* FACEIT badge with brand orange chevron */}
+            {/* FACEIT badge with brand orange chevron and white text */}
             {os.faceitStatus === "in_match" ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-bold text-[#FF5500]">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-bold text-[#FF5500]">
                 <FaceitIcon className="w-2.5 h-2.5" />
                 <span>В матче FACEIT</span>
               </span>
             ) : os.faceitElo ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-bold text-[#FF5500]">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-bold text-[#FF5500]">
                 <FaceitIcon className="w-2.5 h-2.5" />
                 <span className="text-white/90 font-medium">
                   Lvl {os.faceitLevel || 3} · {os.faceitElo} ELO
