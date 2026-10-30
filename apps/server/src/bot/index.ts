@@ -1,8 +1,9 @@
 import { Bot, session, GrammyError, HttpError, InlineKeyboard } from "grammy";
 import type { Context, SessionFlavor } from "grammy";
 import { startCommand } from "./commands/start.js";
+import { menuCommand } from "./commands/menu.js";
 import { statusCommand } from "./commands/status.js";
-import { groupCommand } from "./commands/group.js";
+import { groupCommand, showGroupsWithInvites } from "./commands/group.js";
 import { handleStatusCallback, handleGroupStatusRefresh } from "./callbacks/status.js";
 import { handleLocationUpdate } from "./handlers/location.js";
 import { prisma } from "../db/prisma.js";
@@ -15,12 +16,13 @@ interface SessionData {
 export type BotContext = Context & SessionFlavor<SessionData>;
 
 export const BOT_COMMANDS = [
-  { command: "status", description: "Посмотреть кто сегодня готов играть" },
+  { command: "menu", description: "Главное меню с кнопками" },
+  { command: "status", description: "Кто сегодня готов играть" },
+  { command: "group", description: "Твоя группа и ссылка-инвайт" },
   { command: "ready", description: "Отметить готовность (🟢)" },
   { command: "maybe", description: "Маловероятно / попозже (🟡)" },
   { command: "busy", description: "Сегодня никак не могу (🔴)" },
-  { command: "group", description: "Управление группами и инвайты" },
-  { command: "start", description: "Главное меню и регистрация" },
+  { command: "start", description: "Перезапуск и информация" },
 ];
 
 export function createBot(): Bot<BotContext> | null {
@@ -42,6 +44,7 @@ export function createBot(): Bot<BotContext> | null {
 
   // Commands
   bot.command("start", startCommand);
+  bot.command("menu", menuCommand);
   bot.command("ready", (ctx) => statusCommand(ctx, "READY"));
   bot.command("busy", (ctx) => statusCommand(ctx, "UNAVAILABLE"));
   bot.command("maybe", (ctx) => statusCommand(ctx, "UNLIKELY"));
@@ -52,33 +55,37 @@ export function createBot(): Bot<BotContext> | null {
   bot.callbackQuery(/^status:/, handleStatusCallback);
   bot.callbackQuery(/^groups:status:/, handleGroupStatusRefresh);
 
+  bot.callbackQuery("nav:menu", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await menuCommand(ctx);
+  });
+
+  bot.callbackQuery("groups:status_all", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await statusCommand(ctx, "VIEW");
+  });
+
+  bot.callbackQuery("groups:quick_invite", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    if (!ctx.from) return;
+    const user = await prisma.user.findUnique({ where: { telegramId: BigInt(ctx.from.id) } });
+    if (!user) return;
+    await showGroupsWithInvites(ctx, user.id);
+  });
+
   bot.callbackQuery("groups:list", async (ctx) => {
     await ctx.answerCallbackQuery();
     if (!ctx.from) return;
     const user = await prisma.user.findUnique({ where: { telegramId: BigInt(ctx.from.id) } });
     if (!user) return;
-    const memberships = await prisma.groupMember.findMany({
-      where: { userId: user.id },
-      include: { group: { include: { _count: { select: { members: true } } } } },
-    });
-    if (memberships.length === 0) {
-      await ctx.reply("У тебя пока нет групп.\nСоздай группу: `/group create Название`", {
-        parse_mode: "Markdown",
-      });
-      return;
-    }
-    let text = "👥 **Твои группы:**\n\n";
-    for (const m of memberships) {
-      text += `• **${m.group.name}** — ${m.group._count.members} участников\n`;
-    }
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await showGroupsWithInvites(ctx, user.id);
   });
 
   bot.callbackQuery("friends:list", async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.reply(
       "🤝 Список друзей синхронизируется через группы и Telegram.\n" +
-        "Пригласи друзей в бота или группу по инвайт-ссылке из `/group`!"
+        "Используй /group чтобы получить инвайт-ссылку для отправки друзьям!"
     );
   });
 

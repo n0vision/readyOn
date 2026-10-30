@@ -42,38 +42,32 @@ export async function startCommand(ctx: BotContext) {
       });
 
       await ctx.reply(
-        `👋 Привет, ${user.displayName}!\n\n` +
-          `Ты присоединился к группе «${group.name}»!\n\n` +
-          `Поставь статус на сегодня:`,
-        { reply_markup: getStatusKeyboard() }
+        `🎉 Привет, ${user.displayName}!\n\n` +
+          `Ты успешно присоединился к группе **«${group.name}»**!\n\n` +
+          `Открой /menu чтобы выставить свой статус готовности на сегодня.`,
+        {
+          parse_mode: "Markdown",
+          reply_markup: new InlineKeyboard().text("🎮 Открыть меню", "nav:menu"),
+        }
       );
       return;
     }
   }
 
-  // Regular start
-  const keyboard = new InlineKeyboard()
-    .text("🟢 Готов", "status:READY")
-    .text("🟡 Может быть", "status:UNLIKELY")
-    .text("🔴 Не сегодня", "status:UNAVAILABLE")
-    .row()
-    .text("👥 Мои группы", "groups:list")
-    .text("👤 Друзья", "friends:list");
-
+  // Pure start command: welcomes and introduces the bot without giant keyboard
   await ctx.reply(
     `👋 Привет, ${user.displayName}!\n\n` +
-      `**readyOn** — покажи друзьям, когда ты готов играть.\n\n` +
-      `🎮 Поставь статус на сегодня:`,
+      `**readyOn** — приложение для гейминг-компаний.\n` +
+      `Больше не нужно спамить «кс?» в чат — здесь всегда видно, кто готов играть, со скольки и откуда.\n\n` +
+      `📌 **Доступные команды:**\n` +
+      `• /menu — Главное меню со всеми кнопками\n` +
+      `• /status — Кто сейчас готов играть\n` +
+      `• /group — Твоя группа и ссылка-инвайт\n` +
+      `• /ready, /maybe, /busy — Быстрая смена статуса\n\n` +
+      `Используй /menu или нажми кнопку ниже, чтобы начать!`,
     {
       parse_mode: "Markdown",
-      reply_markup: keyboard,
+      reply_markup: new InlineKeyboard().text("🎮 Открыть меню", "nav:menu"),
     }
   );
-}
-
-export function getStatusKeyboard() {
-  return new InlineKeyboard()
-    .text("🟢 Готов", "status:READY")
-    .text("🟡 Может быть", "status:UNLIKELY")
-    .text("🔴 Не сегодня", "status:UNAVAILABLE");
 }
