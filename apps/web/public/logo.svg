@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2B2D31" />
+      <stop offset="85%" stop-color="#1E1F22" />
+      <stop offset="100%" stop-color="#141517" />
+    </radialGradient>
+
+    <!-- Glowing Ready Green -->
+    <filter id="glowGreen" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur1" />
+      <feGaussianBlur stdDeviation="24" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Glowing Blue Accent -->
+    <filter id="glowBlue" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Reticle Gradient -->
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8BA4CC" />
+      <stop offset="100%" stop-color="#3F5F96" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base (Circle for perfect Telegram cropping) -->
+  <circle cx="256" cy="256" r="256" fill="url(#bgGrad)" />
+
+  <!-- Outer Subtle Tech Ring -->
+  <circle cx="256" cy="256" r="216" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.06" stroke-dasharray="16 10" />
+
+  <!-- Tactical Secondary Ring -->
+  <circle cx="256" cy="256" r="172" fill="none" stroke="url(#blueGrad)" stroke-width="4" stroke-opacity="0.25" />
+
+  <!-- Primary Tactical Reticle Ring (Broken segments) -->
+  <circle cx="256" cy="256" r="132" fill="none" stroke="url(#blueGrad)" stroke-width="8" stroke-dasharray="80 24 80 24" filter="url(#glowBlue)" />
+
+  <!-- Crosshair Axis Bars (Top, Bottom, Left, Right) -->
+  <!-- Top -->
+  <line x1="256" y1="72" x2="256" y2="160" stroke="#8BA4CC" stroke-width="8" stroke-linecap="round" />
+  <line x1="256" y1="185" x2="256" y2="205" stroke="#23A55A" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Bottom -->
+  <line x1="256" y1="352" x2="256" y2="440" stroke="#8BA4CC" stroke-width="8" stroke-linecap="round" />
+  <line x1="256" y1="307" x2="256" y2="327" stroke="#23A55A" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Left -->
+  <line x1="72" y1="256" x2="160" y2="256" stroke="#8BA4CC" stroke-width="8" stroke-linecap="round" />
+  <line x1="185" y1="256" x2="205" y2="256" stroke="#23A55A" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Right -->
+  <line x1="352" y1="256" x2="440" y2="256" stroke="#8BA4CC" stroke-width="8" stroke-linecap="round" />
+  <line x1="307" y1="256" x2="327" y2="256" stroke="#23A55A" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Tactical Corner HUD Brackets -->
+  <!-- Top-Left -->
+  <path d="M 170 140 L 140 140 L 140 170" fill="none" stroke="#8BA4CC" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+  <!-- Top-Right -->
+  <path d="M 342 140 L 372 140 L 372 170" fill="none" stroke="#8BA4CC" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+  <!-- Bottom-Left -->
+  <path d="M 170 372 L 140 372 L 140 342" fill="none" stroke="#8BA4CC" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+  <!-- Bottom-Right -->
+  <path d="M 342 372 L 372 372 L 372 342" fill="none" stroke="#8BA4CC" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+
+  <!-- Central Target Ring -->
+  <circle cx="256" cy="256" r="42" fill="#1E1F22" stroke="#8BA4CC" stroke-width="5" stroke-opacity="0.8" />
+
+  <!-- Luminous "READY" Core Dot (Emerald Green) -->
+  <circle cx="256" cy="256" r="22" fill="#23A55A" filter="url(#glowGreen)" />
+  <circle cx="256" cy="256" r="10" fill="#E6FFED" />
+</svg>
