@@ -108,7 +108,7 @@ export function createBot(): Bot<BotContext> | null {
   });
 
   bot.callbackQuery("open:miniapp", async (ctx) => {
-    const miniAppUrl = process.env.MINI_APP_URL || "https://soft-autumn-tells-yesterday.trycloudflare.com";
+    const miniAppUrl = process.env.MINI_APP_URL || "https://connectors-comparisons-divine-quilt.trycloudflare.com";
     const keyboard = new InlineKeyboard();
     if (miniAppUrl.startsWith("https://")) {
       keyboard.webApp("📱 Открыть readyOn", miniAppUrl);

@@ -25,7 +25,7 @@ export function getToday(): Date {
 
 export function buildGroupKeyboard(groupId: number): InlineKeyboard {
   const keyboard = new InlineKeyboard().text("🔄 Обновить", `groups:status:${groupId}`);
-  const miniAppUrl = process.env.MINI_APP_URL || "https://soft-autumn-tells-yesterday.trycloudflare.com";
+  const miniAppUrl = process.env.MINI_APP_URL || "https://connectors-comparisons-divine-quilt.trycloudflare.com";
 
   if (miniAppUrl.startsWith("https://")) {
     keyboard.webApp("📱 Mini App", miniAppUrl);

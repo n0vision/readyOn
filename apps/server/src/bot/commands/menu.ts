@@ -36,7 +36,7 @@ export async function menuCommand(ctx: BotContext) {
     .text("🔗 Инвайт-ссылка", "groups:quick_invite")
     .row();
 
-  const miniAppUrl = process.env.MINI_APP_URL || "https://soft-autumn-tells-yesterday.trycloudflare.com";
+  const miniAppUrl = process.env.MINI_APP_URL || "https://connectors-comparisons-divine-quilt.trycloudflare.com";
   if (miniAppUrl.startsWith("https://")) {
     keyboard.webApp("📱 Открыть Mini App", miniAppUrl);
   } else {

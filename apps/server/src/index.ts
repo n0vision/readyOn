@@ -48,8 +48,20 @@ async function main() {
         try {
           await bot.api.setMyCommands(BOT_COMMANDS);
           console.log("✅ Telegram bot commands registered for '/' menu");
+
+          const miniAppUrl = process.env.MINI_APP_URL;
+          if (miniAppUrl && miniAppUrl.startsWith("https://")) {
+            await bot.api.setChatMenuButton({
+              menu_button: {
+                type: "web_app",
+                text: "readyOn",
+                web_app: { url: miniAppUrl },
+              },
+            });
+            console.log(`✅ Telegram bot menu button set to ${miniAppUrl}`);
+          }
         } catch (e: any) {
-          console.warn("⚠️ Failed to set bot commands:", e.message);
+          console.warn("⚠️ Failed to set bot commands/menu:", e.message);
         }
       },
     });
