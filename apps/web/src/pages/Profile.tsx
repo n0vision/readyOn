@@ -4,12 +4,30 @@ import {
   fetchUserProfile,
   updateUserIntegrations,
   updateUserProfile,
+  updateUserNotifications,
+  sendTestNotification,
 } from "../services/api.js";
 import { SteamIcon, FaceitIcon, TeamSpeakIcon } from "../components/Icons.js";
-import { User, Calendar, MapPin, X, Edit3, Camera } from "lucide-react";
+import { User, Calendar, MapPin, X, Edit3, Camera, Bell } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics.js";
 
 type EditPlatform = "steam" | "faceit" | "ts" | null;
+
+interface NotificationSettings {
+  reminder: boolean;
+  friend_ready: boolean;
+  squad_full: boolean;
+  friend_cs2: boolean;
+  friend_ts: boolean;
+}
+
+const defaultSettings: NotificationSettings = {
+  reminder: true,
+  friend_ready: true,
+  squad_full: true,
+  friend_cs2: false,
+  friend_ts: false,
+};
 
 export function Profile() {
   const telegramId = getCurrentTelegramId();
@@ -18,6 +36,11 @@ export function Profile() {
   const [editing, setEditing] = useState<EditPlatform>(null);
   const [inputValue, setInputValue] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Notification settings state
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>(defaultSettings);
+  const [testingNotif, setTestingNotif] = useState(false);
+  const [testSuccess, setTestSuccess] = useState<string | null>(null);
 
   // Profile editing state (Name and Avatar)
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -31,6 +54,13 @@ export function Profile() {
       setLoading(true);
       const data = await fetchUserProfile(telegramId);
       setProfile(data);
+
+      if (data.notificationSettings && typeof data.notificationSettings === "object") {
+        setNotifSettings({
+          ...defaultSettings,
+          ...data.notificationSettings,
+        });
+      }
 
       // Auto-sync Telegram avatar if user doesn't have one yet
       if (!data.avatarUrl && tgUser?.photo_url) {
@@ -50,6 +80,38 @@ export function Profile() {
   useEffect(() => {
     loadProfile();
   }, [telegramId]);
+
+  const handleToggleNotification = async (key: keyof NotificationSettings) => {
+    triggerHaptic("selection");
+    const updated = {
+      ...notifSettings,
+      [key]: !notifSettings[key],
+    };
+    setNotifSettings(updated);
+    try {
+      await updateUserNotifications(telegramId, updated);
+    } catch (err) {
+      console.error("Failed to save notification settings:", err);
+    }
+  };
+
+  const handleSendTestNotification = async () => {
+    triggerHaptic("selection");
+    setTestingNotif(true);
+    setTestSuccess(null);
+    try {
+      await sendTestNotification(telegramId);
+      triggerHaptic("success");
+      setTestSuccess("🔔 Уведомление отправлено! Проверь бота @readyOnCS_bot");
+      setTimeout(() => setTestSuccess(null), 5000);
+    } catch (err: any) {
+      triggerHaptic("error");
+      setTestSuccess(err.message || "Ошибка отправки в бота");
+      setTimeout(() => setTestSuccess(null), 5000);
+    } finally {
+      setTestingNotif(false);
+    }
+  };
 
   const openEdit = (platform: EditPlatform) => {
     triggerHaptic("selection");
@@ -281,16 +343,56 @@ export function Profile() {
 
       {/* Notifications */}
       <section className="space-y-2">
-        <h2 className="text-xs font-bold text-[#949BA4] px-1 uppercase tracking-wider">
-          Уведомления
-        </h2>
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-xs font-bold text-[#949BA4] uppercase tracking-wider">
+            Уведомления бота
+          </h2>
+          <span className="text-[11px] text-[#8BA4CC] font-medium">@readyOnCS_bot</span>
+        </div>
 
-        <div className="rounded-2xl bg-[#2B2D31] p-3.5 space-y-2.5 border border-white/5">
-          <NotificationToggle label="Ремайндер поставить статус" defaultOn={true} />
-          <NotificationToggle label="Друг готов играть" defaultOn={true} />
-          <NotificationToggle label="Все в скваде готовы" defaultOn={true} />
-          <NotificationToggle label="Друг зашёл в CS2" defaultOn={false} />
-          <NotificationToggle label="Друг в TeamSpeak" defaultOn={false} />
+        <div className="rounded-2xl bg-[#2B2D31] p-3.5 space-y-2.5 border border-white/5 shadow-sm">
+          <NotificationToggle
+            label="Ремайндер поставить статус"
+            checked={notifSettings.reminder}
+            onChange={() => handleToggleNotification("reminder")}
+          />
+          <NotificationToggle
+            label="Друг готов играть"
+            checked={notifSettings.friend_ready}
+            onChange={() => handleToggleNotification("friend_ready")}
+          />
+          <NotificationToggle
+            label="Все в скваде готовы (фулл стак)"
+            checked={notifSettings.squad_full}
+            onChange={() => handleToggleNotification("squad_full")}
+          />
+          <NotificationToggle
+            label="Друг зашёл в CS2"
+            checked={notifSettings.friend_cs2}
+            onChange={() => handleToggleNotification("friend_cs2")}
+          />
+          <NotificationToggle
+            label="Друг в TeamSpeak"
+            checked={notifSettings.friend_ts}
+            onChange={() => handleToggleNotification("friend_ts")}
+          />
+
+          <div className="pt-2 border-t border-white/5 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleSendTestNotification}
+              disabled={testingNotif}
+              className="w-full py-2.5 px-3 rounded-xl bg-[#1E1F22] hover:bg-[#323336] active:scale-[0.98] border border-white/10 text-xs font-semibold text-[#DBDEE1] flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <Bell className="w-3.5 h-3.5 text-[#5865F2]" />
+              <span>{testingNotif ? "Отправка..." : "Отправить тестовое уведомление"}</span>
+            </button>
+            {testSuccess && (
+              <p className="text-[11px] text-center text-[#23A55A] font-medium animate-fade-in">
+                {testSuccess}
+              </p>
+            )}
+          </div>
         </div>
       </section>
 
@@ -457,18 +559,22 @@ export function Profile() {
   );
 }
 
-function NotificationToggle({ label, defaultOn }: { label: string; defaultOn: boolean }) {
-  const [checked, setChecked] = useState(defaultOn);
+function NotificationToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
   return (
     <label className="flex items-center justify-between cursor-pointer select-none py-1">
       <span className="text-xs text-[#DBDEE1]">{label}</span>
       <input
         type="checkbox"
         checked={checked}
-        onChange={(e) => {
-          triggerHaptic("selection");
-          setChecked(e.target.checked);
-        }}
+        onChange={onChange}
         className="w-10 h-6 rounded-full appearance-none bg-[#1E1F22] border border-white/10 checked:bg-[#3F5F96] checked:border-[#3F5F96] transition-colors relative
           before:content-[''] before:absolute before:w-4 before:h-4 before:rounded-full before:bg-white before:top-0.5 before:left-1 before:transition-transform
           checked:before:translate-x-3.5 cursor-pointer shadow-inner"

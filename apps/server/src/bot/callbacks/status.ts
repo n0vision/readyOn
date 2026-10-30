@@ -41,7 +41,7 @@ export async function handleStatusCallback(ctx: BotContext) {
     },
   });
 
-  // Check if group full stack reached
+  // Check if group full stack reached & notify friends
   if (status === "READY") {
     const userGroups = await prisma.groupMember.findMany({
       where: { userId: user.id },
@@ -50,6 +50,9 @@ export async function handleStatusCallback(ctx: BotContext) {
     for (const g of userGroups) {
       notificationEngine.checkGroupFullStack(g.groupId).catch(() => {});
     }
+    notificationEngine.notifyFriendReady(user.id, availableFrom).catch((err) => {
+      console.error("notifyFriendReady error:", err);
+    });
   }
 
   const emoji = STATUS_EMOJI[status] || "🟢";

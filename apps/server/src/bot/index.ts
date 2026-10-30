@@ -10,6 +10,7 @@ import { settingsCommand, handleSettingsCallback } from "./commands/settings.js"
 import { handleStatusCallback, handleGroupStatusRefresh } from "./callbacks/status.js";
 import { handleLocationUpdate } from "./handlers/location.js";
 import { prisma } from "../db/prisma.js";
+import { notificationEngine } from "../services/notification/engine.js";
 
 // Session data
 interface SessionData {
@@ -28,6 +29,7 @@ export const BOT_COMMANDS = [
   { command: "ready", description: "Отметить готовность (🟢)" },
   { command: "maybe", description: "Маловероятно / попозже (🟡)" },
   { command: "busy", description: "Сегодня никак не могу (🔴)" },
+  { command: "test", description: "Тест уведомлений от бота" },
   { command: "start", description: "Перезапуск и информация" },
 ];
 
@@ -60,6 +62,10 @@ export function createBot(): Bot<BotContext> | null {
   bot.command("unlink", unlinkCommand);
   bot.command("poll", pollCommand);
   bot.command("settings", settingsCommand);
+  bot.command("test", async (ctx) => {
+    if (!ctx.from) return;
+    await notificationEngine.sendTestNotification(ctx.from.id);
+  });
 
   // Inline keyboard callbacks
   bot.callbackQuery(/^status:/, handleStatusCallback);

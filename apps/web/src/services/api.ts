@@ -163,3 +163,27 @@ export async function updateUserProfile(
   if (!res.ok) throw new Error("Failed to update profile");
   return res.json();
 }
+
+export async function updateUserNotifications(
+  telegramId: string,
+  settings: Record<string, boolean>
+) {
+  const res = await fetch(`${API_BASE}/api/users/${telegramId}/notifications`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ settings }),
+  });
+  if (!res.ok) throw new Error("Failed to update notification settings");
+  return res.json();
+}
+
+export async function sendTestNotification(telegramId: string) {
+  const res = await fetch(`${API_BASE}/api/users/${telegramId}/test-notification`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to send test notification");
+  }
+  return res.json();
+}

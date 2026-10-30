@@ -67,6 +67,10 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
       for (const g of userGroups) {
         notificationEngine.checkGroupFullStack(g.groupId).catch(() => {});
       }
+      // Notify teammates that user is ready
+      notificationEngine.notifyFriendReady(user.id, availableFrom).catch((err) => {
+        console.error("notifyFriendReady error:", err);
+      });
     }
 
     return dailyStatus;

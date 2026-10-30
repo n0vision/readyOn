@@ -31,6 +31,23 @@ export class NotificationEngine {
   }
 
   /**
+   * Helper to build a Mini App inline button
+   */
+  getMiniAppKeyboard(primaryBtn?: { text: string; data: string }): InlineKeyboard {
+    const keyboard = new InlineKeyboard();
+    if (primaryBtn) {
+      keyboard.text(primaryBtn.text, primaryBtn.data).row();
+    }
+    const miniAppUrl = process.env.MINI_APP_URL || "https://soft-autumn-tells-yesterday.trycloudflare.com";
+    if (miniAppUrl.startsWith("https://")) {
+      keyboard.webApp("📱 Открыть readyOn", miniAppUrl);
+    } else {
+      keyboard.text("📱 Открыть readyOn", "open:miniapp");
+    }
+    return keyboard;
+  }
+
+  /**
    * Safely send a message to a user by telegramId
    */
   async sendToUser(
@@ -48,7 +65,143 @@ export class NotificationEngine {
       return true;
     } catch (err: any) {
       console.warn(`Failed to send notification to ${telegramId}:`, err.message);
-      return false;
+      // Fallback: retry without markdown formatting in case of syntax issue
+      try {
+        const plainText = text.replace(/[*_`]/g, "");
+        await this.bot.api.sendMessage(Number(telegramId), plainText, {
+          reply_markup: keyboard,
+        });
+        return true;
+      } catch (retryErr: any) {
+        console.warn(`Retry plain text failed for ${telegramId}:`, retryErr.message);
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Send an instant test notification to a user to verify delivery
+   */
+  async sendTestNotification(telegramId: bigint | number | string): Promise<{ success: boolean; error?: string }> {
+    if (!this.bot) {
+      return { success: false, error: "Bot is not initialized" };
+    }
+
+    const text =
+      `🔔 **Тестовое уведомление readyOn**\n\n` +
+      `Всё работает отлично! Бот присылает уведомления о:\n` +
+      `• Готовности тиммейтов к игре\n` +
+      `• Сборе полного сквада (фулл стак)\n` +
+      `• Вечернем опросе о планах на игру\n` +
+      `• Заходе друзей в CS2 / TeamSpeak`;
+
+    const keyboard = this.getMiniAppKeyboard({
+      text: "🟢 Я готов играть",
+      data: "status:READY:now",
+    });
+
+    const sent = await this.sendToUser(telegramId, text, keyboard);
+    if (!sent) {
+      return {
+        success: false,
+        error: "Не удалось отправить сообщение. Убедись, что нажал /start в диалоге с @readyOnCS_bot",
+      };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+    });
+    if (user) {
+      await prisma.notificationLog.create({
+        data: {
+          userId: user.id,
+          type: "test_notification",
+          message: text,
+          sent: true,
+        },
+      });
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Notify squad members when a player sets their status to READY
+   */
+  async notifyFriendReady(userId: number, availableFrom?: string | null) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        groupMembers: {
+          include: {
+            group: {
+              include: {
+                members: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) return;
+
+    // 15-minute debounce per friend pair
+    const debounceLimit = new Date(Date.now() - 15 * 60 * 1000);
+    const notifiedUserIds = new Set<number>();
+    notifiedUserIds.add(user.id);
+
+    const timeStr = availableFrom ? ` с ${availableFrom}` : "";
+
+    for (const gm of user.groupMembers) {
+      const group = gm.group;
+      for (const m of group.members) {
+        const friend = m.user;
+        if (notifiedUserIds.has(friend.id)) continue;
+
+        // Check friend's notification preferences (default true)
+        const settings = (friend.notificationSettings as Record<string, any>) || {};
+        if (settings.friend_ready === false) continue;
+
+        // Check debounce log
+        const recentAlert = await prisma.notificationLog.findFirst({
+          where: {
+            userId: friend.id,
+            type: `friend_ready_${user.id}`,
+            createdAt: { gte: debounceLimit },
+          },
+        });
+
+        if (recentAlert) continue;
+
+        notifiedUserIds.add(friend.id);
+
+        const text =
+          `🟢 **${user.displayName} готов к катке!**\n\n` +
+          `В скваде **«${group.name}»** движ${timeStr ? `: готов играть${timeStr}` : ""}.\n` +
+          `Собираемся?`;
+
+        const keyboard = this.getMiniAppKeyboard({
+          text: "🟢 Я тоже готов!",
+          data: "status:READY:now",
+        });
+
+        const sent = await this.sendToUser(friend.telegramId, text, keyboard);
+        if (sent) {
+          await prisma.notificationLog.create({
+            data: {
+              userId: friend.id,
+              type: `friend_ready_${user.id}`,
+              message: text,
+              sent: true,
+            },
+          });
+        }
+      }
     }
   }
 
@@ -87,13 +240,17 @@ export class NotificationEngine {
     let sentCount = 0;
 
     const keyboard = new InlineKeyboard()
-      .text("🟢 Готов", "status:READY")
-      .text("🟡 Может быть", "status:UNLIKELY")
-      .text("🔴 Не сегодня", "status:UNAVAILABLE");
+      .text("🟢 Готов", "status:READY:now")
+      .text("🟡 Возможно", "status:UNLIKELY")
+      .text("🔴 Не смогу", "status:UNAVAILABLE");
 
     for (const member of group.members) {
       const user = member.user;
       const ds = user.dailyStatuses?.[0];
+
+      // Check user preferences (default true)
+      const settings = (user.notificationSettings as Record<string, any>) || {};
+      if (settings.reminder === false) continue;
 
       // If user hasn't set status today (or UNSET)
       if (!ds || ds.status === "UNSET") {
@@ -108,8 +265,8 @@ export class NotificationEngine {
 
         if (!existing) {
           const text =
-            `🎮 **Планы на вечер в CS?**\n\n` +
-            `Привет, ${user.displayName}! В группе **«${group.name}»** собирается пати на вечер.\n` +
+            `🎮 **Планы на вечер в CS2?**\n\n` +
+            `Привет, ${user.displayName}! В скваде **«${group.name}»** собирается пати на вечер.\n` +
             `Поставь свой статус готовности:`;
 
           const sent = await this.sendToUser(user.telegramId, text, keyboard);
@@ -174,7 +331,7 @@ export class NotificationEngine {
       if (!alreadySent) {
         let text =
           `🔥 **ФУЛЛ СТАК ГОТОВ! [${readyMembers.length}/${threshold}]**\n\n` +
-          `В группе **«${group.name}»** все в сборе для катки в CS2:\n\n`;
+          `В скваде **«${group.name}»** все в сборе для катки в CS2:\n\n`;
 
         for (const m of readyMembers) {
           const ds = m.user.dailyStatuses[0];
@@ -185,10 +342,13 @@ export class NotificationEngine {
 
         text += `\n🎮 Залетаем в игру и голосовой чат!`;
 
-        const keyboard = new InlineKeyboard().text("📱 Открыть readyOn", "open:miniapp");
+        const keyboard = this.getMiniAppKeyboard();
 
-        // Broadcast to all group members
+        // Broadcast to all group members who haven't disabled squad_full
         for (const member of group.members) {
+          const settings = (member.user.notificationSettings as Record<string, any>) || {};
+          if (settings.squad_full === false) continue;
+
           await this.sendToUser(member.user.telegramId, text, keyboard);
         }
 
@@ -248,6 +408,9 @@ export class NotificationEngine {
         const friend = m.user;
         if (notifiedUserIds.has(friend.id)) continue;
 
+        const settings = (friend.notificationSettings as Record<string, any>) || {};
+        if (settings.friend_cs2 === false) continue;
+
         const isReadyToday = friend.dailyStatuses?.[0]?.status === "READY";
         if (!isReadyToday) continue;
 
@@ -267,9 +430,10 @@ export class NotificationEngine {
             `🎮 **${user.displayName} зашёл в Counter-Strike 2!**\n\n` +
             `Ты сегодня отметил статус 🟢 Готов — пора заходить в катку!`;
 
-          const keyboard = new InlineKeyboard()
-            .text("📊 Статусы группы", "groups:status_all")
-            .text("📱 Mini App", "open:miniapp");
+          const keyboard = this.getMiniAppKeyboard({
+            text: "📊 Статусы сквада",
+            data: "groups:status_all",
+          });
 
           const sent = await this.sendToUser(friend.telegramId, text, keyboard);
           if (sent) {

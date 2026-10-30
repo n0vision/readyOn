@@ -94,4 +94,30 @@ test.describe("Backend REST API", () => {
     expect(body.onlineStatus.faceitElo).toBeGreaterThan(0);
     expect(body.onlineStatus.faceitLevel).toBeGreaterThan(0);
   });
+
+  test("PUT /api/users/:telegramId/notifications saves settings", async ({ request }) => {
+    const res = await request.put(`${API_BASE}/api/users/${TELEGRAM_ID}/notifications`, {
+      data: {
+        settings: {
+          reminder: true,
+          friend_ready: true,
+          squad_full: true,
+          friend_cs2: true,
+          friend_ts: false,
+        },
+      },
+    });
+    expect(res.status()).toBe(200);
+
+    const profRes = await request.get(`${API_BASE}/api/users/${TELEGRAM_ID}`);
+    const prof = await profRes.json();
+    expect(prof.notificationSettings.friend_cs2).toBe(true);
+  });
+
+  test("POST /api/users/:telegramId/test-notification sends test bot message", async ({ request }) => {
+    const res = await request.post(`${API_BASE}/api/users/${TELEGRAM_ID}/test-notification`);
+    expect(res.status()).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+  });
 });

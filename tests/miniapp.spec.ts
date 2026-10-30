@@ -8,8 +8,8 @@ test.describe("Telegram Mini App UI", () => {
     // Check title
     await expect(page.locator("h1")).toContainText("readyOn");
 
-    // Wait for group header to load with real name
-    await expect(page.locator("text=CS Пацаны").first()).toBeVisible({ timeout: 10000 });
+    // Wait for group header selector to load
+    await expect(page.locator("select").first()).toBeVisible({ timeout: 10000 });
 
     // Check members list
     await expect(page.locator("text=Ivan")).toBeVisible();
@@ -60,7 +60,7 @@ test.describe("Telegram Mini App UI", () => {
     await page.getByRole("link", { name: /Группа/i }).click();
     await expect(page.getByRole("heading", { name: "Группы", exact: true })).toBeVisible();
     await expect(page.locator("text=CS Пацаны")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Инвайт/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Инвайт/i }).first()).toBeVisible();
 
     // Save groups screenshot
     await page.screenshot({

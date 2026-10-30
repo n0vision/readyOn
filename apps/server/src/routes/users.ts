@@ -3,6 +3,7 @@ import { prisma } from "../db/prisma.js";
 import { steamService } from "../services/gaming/steam.js";
 import { FaceitService } from "../services/gaming/faceit.js";
 import { gamingPoller } from "../services/gaming/poller.js";
+import { notificationEngine } from "../services/notification/engine.js";
 
 const faceitService = new FaceitService();
 
@@ -117,6 +118,18 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
       data: { notificationSettings: req.body.settings },
     });
 
+    return { success: true };
+  });
+
+  // POST /api/users/:telegramId/test-notification — отправить тестовое уведомление в Telegram бот
+  app.post<{
+    Params: { telegramId: string };
+  }>("/:telegramId/test-notification", async (req, reply) => {
+    const telegramId = BigInt(req.params.telegramId);
+    const result = await notificationEngine.sendTestNotification(telegramId);
+    if (!result.success) {
+      return reply.status(400).send({ error: result.error || "Failed to send test notification" });
+    }
     return { success: true };
   });
 };
