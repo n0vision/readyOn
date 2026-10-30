@@ -130,7 +130,12 @@ export function Dashboard() {
   const totalCount = selectedGroup?.members.length || 0;
 
   return (
-    <div className="p-4 space-y-3.5 max-w-lg mx-auto pb-40">
+    <div
+      style={{
+        paddingBottom: "calc(140px + max(env(safe-area-inset-bottom, 0px), var(--app-safe-bottom, 0px)))",
+      }}
+      className="p-4 space-y-3.5 max-w-lg mx-auto"
+    >
       {/* Top Header: Logo + Refresh */}
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2.5">
@@ -250,7 +255,12 @@ export function Dashboard() {
 
       {/* Floating Bottom Banner: "Нужно ещё N игрока" + [ Пригласить ] */}
       {selectedGroup && (
-        <div className="fixed bottom-20 left-0 right-0 px-3 max-w-lg mx-auto z-40 pointer-events-none">
+        <div
+          style={{
+            bottom: "calc(64px + max(env(safe-area-inset-bottom, 0px), var(--app-safe-bottom, 0px)) + 12px)",
+          }}
+          className="fixed left-0 right-0 px-3 max-w-lg mx-auto z-40 pointer-events-none"
+        >
           <div className="bg-[#2B2D31]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-3 px-3.5 shadow-xl flex items-center justify-between gap-2.5 pointer-events-auto">
             <div className="min-w-0 flex-1">
               <div className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5">

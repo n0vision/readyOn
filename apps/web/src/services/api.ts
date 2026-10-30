@@ -150,3 +150,16 @@ export async function updateGroupSettings(
   if (!res.ok) throw new Error("Failed to update group settings");
   return res.json();
 }
+
+export async function updateUserProfile(
+  telegramId: string,
+  data: { displayName?: string; avatarUrl?: string | null }
+) {
+  const res = await fetch(`${API_BASE}/api/users/${telegramId}/profile`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update profile");
+  return res.json();
+}

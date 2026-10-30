@@ -1,7 +1,10 @@
 import type { FastifyPluginAsync } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { steamService } from "../services/gaming/steam.js";
+import { FaceitService } from "../services/gaming/faceit.js";
 import { gamingPoller } from "../services/gaming/poller.js";
+
+const faceitService = new FaceitService();
 
 export const userRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/users/:telegramId — профиль пользователя
@@ -33,6 +36,29 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
     };
   });
 
+  // PUT /api/users/:telegramId/profile — обновить имя и аватарку
+  app.put<{
+    Params: { telegramId: string };
+    Body: { displayName?: string; avatarUrl?: string | null };
+  }>("/:telegramId/profile", async (req, reply) => {
+    const telegramId = BigInt(req.params.telegramId);
+    const { displayName, avatarUrl } = req.body;
+
+    const user = await prisma.user.update({
+      where: { telegramId },
+      data: {
+        ...(displayName && { displayName: displayName.trim() }),
+        ...(avatarUrl !== undefined && { avatarUrl: avatarUrl?.trim() || null }),
+      },
+    });
+
+    return {
+      id: user.id,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+    };
+  });
+
   // PUT /api/users/:telegramId/integrations — обновить привязки
   app.put<{
     Params: { telegramId: string };
@@ -41,24 +67,42 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
     const telegramId = BigInt(req.params.telegramId);
     let { steamId, faceitId, tsIdentity } = req.body;
 
+    const existingUser = await prisma.user.findUnique({ where: { telegramId } });
+    let autoAvatarUrl: string | null = null;
+
     if (steamId) {
       const resolved = await steamService.resolveSteamId(steamId);
-      if (resolved) steamId = resolved;
+      if (resolved) {
+        steamId = resolved;
+        const summaries = await steamService.getPlayerSummaries([resolved]);
+        const summary = summaries.get(resolved);
+        if (summary?.avatarUrl && !existingUser?.avatarUrl) {
+          autoAvatarUrl = summary.avatarUrl;
+        }
+      }
     }
 
-    const user = await prisma.user.update({
+    if (faceitId && !autoAvatarUrl && !existingUser?.avatarUrl) {
+      const fSummary = await faceitService.getPlayerByNickname(faceitId);
+      if (fSummary?.avatarUrl) {
+        autoAvatarUrl = fSummary.avatarUrl;
+      }
+    }
+
+    await prisma.user.update({
       where: { telegramId },
       data: {
         ...(steamId !== undefined && { steamId: steamId || null }),
         ...(faceitId !== undefined && { faceitId: faceitId || null }),
         ...(tsIdentity !== undefined && { tsIdentity: tsIdentity || null }),
+        ...(autoAvatarUrl && { avatarUrl: autoAvatarUrl }),
       },
     });
 
     // Trigger instant check
     gamingPoller.poll().catch(() => {});
 
-    return { success: true, steamId, faceitId, tsIdentity };
+    return { success: true, steamId, faceitId, tsIdentity, avatarUrl: autoAvatarUrl };
   });
 
   // PUT /api/users/:telegramId/notifications — настройки уведомлений

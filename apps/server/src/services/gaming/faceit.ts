@@ -6,6 +6,7 @@
 export interface FaceitPlayerSummary {
   playerId: string;
   nickname: string;
+  avatarUrl: string | null;
   elo: number | null;
   level: number | null;
   status: "available" | "in_match" | "offline";
@@ -50,6 +51,7 @@ export class FaceitService {
       return {
         playerId: data.player_id,
         nickname: data.nickname,
+        avatarUrl: data.avatar || null,
         elo: cs2?.faceit_elo || null,
         level: cs2?.skill_level || null,
         status: data.status === "ONLINE" ? "available" : "offline",
@@ -94,6 +96,7 @@ export class FaceitService {
       return {
         playerId: data.player_id,
         nickname: data.nickname,
+        avatarUrl: data.avatar || null,
         elo: cs2?.faceit_elo || null,
         level: cs2?.skill_level || null,
         status: data.status === "ONLINE" ? "available" : "offline",

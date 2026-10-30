@@ -10,7 +10,12 @@ const navItems = [
 
 export function NavBar() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#1E1F22] border-t border-white/5 pb-[env(safe-area-inset-bottom,0px)]">
+    <nav
+      style={{
+        paddingBottom: "max(env(safe-area-inset-bottom, 0px), var(--app-safe-bottom, 0px))",
+      }}
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#1E1F22] border-t border-white/5"
+    >
       <div className="max-w-lg mx-auto flex justify-around items-center h-16 px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
