@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createServer } from "./server.js";
-import { createBot } from "./bot/index.js";
+import { createBot, BOT_COMMANDS } from "./bot/index.js";
 import { prisma } from "./db/prisma.js";
 import { redis } from "./db/redis.js";
 
@@ -26,8 +26,14 @@ async function main() {
   const bot = createBot();
   if (bot) {
     bot.start({
-      onStart: (botInfo) => {
+      onStart: async (botInfo) => {
         console.log(`✅ Bot started as @${botInfo.username}`);
+        try {
+          await bot.api.setMyCommands(BOT_COMMANDS);
+          console.log("✅ Telegram bot commands registered for '/' menu");
+        } catch (e: any) {
+          console.warn("⚠️ Failed to set bot commands:", e.message);
+        }
       },
     });
   }

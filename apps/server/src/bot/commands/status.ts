@@ -3,19 +3,83 @@ import { InlineKeyboard } from "grammy";
 import { prisma } from "../../db/prisma.js";
 import type { ReadyStatus } from "@prisma/client";
 
-const STATUS_EMOJI: Record<string, string> = {
+export const STATUS_EMOJI: Record<string, string> = {
   READY: "🟢",
   UNAVAILABLE: "🔴",
   UNLIKELY: "🟡",
   UNSET: "⚪",
 };
 
-const STATUS_TEXT: Record<string, string> = {
+export const STATUS_TEXT: Record<string, string> = {
   READY: "Готов",
   UNAVAILABLE: "Не сегодня",
   UNLIKELY: "Маловероятно",
   UNSET: "Не выставлен",
 };
+
+export function getToday(): Date {
+  // Use current local date at UTC midnight to keep consistent DB dates across timezones
+  const localDate = new Date().toLocaleDateString("en-CA"); // "YYYY-MM-DD"
+  return new Date(`${localDate}T00:00:00.000Z`);
+}
+
+export function buildGroupKeyboard(groupId: number): InlineKeyboard {
+  const keyboard = new InlineKeyboard().text("🔄 Обновить", `groups:status:${groupId}`);
+  const miniAppUrl = process.env.MINI_APP_URL || "https://soft-autumn-tells-yesterday.trycloudflare.com";
+
+  if (miniAppUrl.startsWith("https://")) {
+    keyboard.webApp("📱 Mini App", miniAppUrl);
+  } else {
+    keyboard.url("📱 Mini App", miniAppUrl);
+  }
+
+  return keyboard;
+}
+
+export function formatGroupText(group: any): string {
+  let text = `👥 **${group.name}**\n\n`;
+
+  for (const member of group.members) {
+    const ds = member.user.dailyStatuses[0];
+    const status = ds?.status || "UNSET";
+    const emoji = STATUS_EMOJI[status] || "⚪";
+    const label = STATUS_TEXT[status] || "Не выставлен";
+
+    let line = `${emoji} **${member.user.displayName}** — ${label}`;
+
+    if (ds?.availableFrom) {
+      line += ` с ${ds.availableFrom}`;
+    }
+    if (ds?.comment) {
+      line += ` _(${ds.comment})_`;
+    }
+
+    const os = member.user.onlineStatus;
+    if (os) {
+      const indicators: string[] = [];
+      if (os.steamStatus === "in_game" && os.steamGame) {
+        indicators.push(`🎮 ${os.steamGame}`);
+      } else if (os.steamStatus === "online") {
+        indicators.push("🎮 Steam онлайн");
+      }
+      if (os.tsStatus === "connected") {
+        indicators.push(`🎧 TS: ${os.tsChannel || "подключён"}`);
+      }
+      if (os.locationStatus === "transit" && os.etaMinutes) {
+        indicators.push(`📍 в пути ~${os.etaMinutes} мин`);
+      } else if (os.locationStatus === "away") {
+        indicators.push("📍 не дома");
+      }
+      if (indicators.length > 0) {
+        line += "\n     " + indicators.join(" · ");
+      }
+    }
+
+    text += line + "\n";
+  }
+
+  return text;
+}
 
 export async function statusCommand(ctx: BotContext, action: string) {
   if (!ctx.from) return;
@@ -28,8 +92,7 @@ export async function statusCommand(ctx: BotContext, action: string) {
     return;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getToday();
 
   // VIEW — показать статусы группы
   if (action === "VIEW") {
@@ -74,8 +137,7 @@ export async function statusCommand(ctx: BotContext, action: string) {
   await showGroupStatuses(ctx, user.id);
 }
 
-async function showGroupStatuses(ctx: BotContext, userId: number) {
-  // Get user's groups
+export async function showGroupStatuses(ctx: BotContext, userId: number) {
   const memberships = await prisma.groupMember.findMany({
     where: { userId },
     include: {
@@ -101,66 +163,18 @@ async function showGroupStatuses(ctx: BotContext, userId: number) {
 
   if (memberships.length === 0) {
     await ctx.reply(
-      "У тебя пока нет групп. Создай одну: /group create Название\n" +
-        "Или присоединись по ссылке-инвайту!"
+      "У тебя пока нет групп. Создай одну: `/group create CS Пацаны`\n" +
+        "Или присоединись по ссылке-инвайту от друга!",
+      { parse_mode: "Markdown" }
     );
     return;
   }
 
   for (const membership of memberships) {
     const group = membership.group;
-    let text = `👥 **${group.name}**\n\n`;
-
-    for (const member of group.members) {
-      const ds = member.user.dailyStatuses[0];
-      const status = ds?.status || "UNSET";
-      const emoji = STATUS_EMOJI[status];
-      const label = STATUS_TEXT[status];
-
-      let line = `${emoji} **${member.user.displayName}** — ${label}`;
-
-      if (ds?.availableFrom) {
-        line += ` с ${ds.availableFrom}`;
-      }
-      if (ds?.comment) {
-        line += ` _(${ds.comment})_`;
-      }
-
-      // Online indicators
-      const os = member.user.onlineStatus;
-      if (os) {
-        const indicators: string[] = [];
-        if (os.steamStatus === "in_game" && os.steamGame) {
-          indicators.push(`🎮 ${os.steamGame}`);
-        } else if (os.steamStatus === "online") {
-          indicators.push("🎮 Steam онлайн");
-        }
-        if (os.tsStatus === "connected") {
-          indicators.push(`🎧 TS: ${os.tsChannel || "подключён"}`);
-        }
-        if (os.locationStatus === "transit" && os.etaMinutes) {
-          indicators.push(`📍 в пути ~${os.etaMinutes} мин`);
-        } else if (os.locationStatus === "away") {
-          indicators.push("📍 не дома");
-        }
-        if (indicators.length > 0) {
-          line += "\n     " + indicators.join(" · ");
-        }
-      }
-
-      text += line + "\n";
-    }
-
-    const keyboard = new InlineKeyboard()
-      .text("🔄 Обновить", `groups:status:${group.id}`)
-      .text("📱 Mini App", "open:miniapp");
+    const text = formatGroupText(group);
+    const keyboard = buildGroupKeyboard(group.id);
 
     await ctx.reply(text, { parse_mode: "Markdown", reply_markup: keyboard });
   }
-}
-
-function getToday(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
 }

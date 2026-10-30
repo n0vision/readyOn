@@ -43,9 +43,11 @@ export interface GroupMemberView {
 }
 
 export interface GroupView {
-  id: number;
-  name: string;
-  inviteCode: string;
+  group: {
+    id: number;
+    name: string;
+    inviteCode: string;
+  };
   members: GroupMemberView[];
 }
 

@@ -18,7 +18,7 @@ export async function createServer() {
 
   // CORS for Mini App
   await app.register(cors, {
-    origin: process.env.MINI_APP_URL || "http://localhost:5173",
+    origin: true,
     credentials: true,
   });
 

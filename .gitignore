@@ -24,6 +24,10 @@ Thumbs.db
 # Logs
 *.log
 
+# Test results
+test-results/
+playwright-report/
+
 # Prisma
 apps/server/prisma/migrations/
 

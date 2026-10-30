@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { prisma } from "../db/prisma.js";
+import { getToday } from "../bot/commands/status.js";
 
 export const friendRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/friends/:telegramId — список друзей
@@ -8,8 +9,7 @@ export const friendRoutes: FastifyPluginAsync = async (app) => {
     const user = await prisma.user.findUnique({ where: { telegramId } });
     if (!user) return reply.status(404).send({ error: "User not found" });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getToday();
 
     const [sent, received] = await Promise.all([
       prisma.friendship.findMany({

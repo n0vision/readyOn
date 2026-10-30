@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { prisma } from "../db/prisma.js";
 import type { ReadyStatus } from "@prisma/client";
+import { getToday } from "../bot/commands/status.js";
 
 export const statusRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/status/:telegramId — получить статус пользователя на сегодня
@@ -9,8 +10,7 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
     const user = await prisma.user.findUnique({ where: { telegramId } });
     if (!user) return reply.status(404).send({ error: "User not found" });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getToday();
 
     const status = await prisma.dailyStatus.findUnique({
       where: { userId_date: { userId: user.id, date: today } },
@@ -49,8 +49,7 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
     const user = await prisma.user.findUnique({ where: { telegramId } });
     if (!user) return reply.status(404).send({ error: "User not found" });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getToday();
 
     const dailyStatus = await prisma.dailyStatus.upsert({
       where: { userId_date: { userId: user.id, date: today } },
@@ -105,8 +104,4 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
   });
 };
 
-function getToday(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+import { getToday } from "../bot/commands/status.js";
