@@ -11,12 +11,16 @@ import {
   subscribeCalendarUrl,
   deleteCalendarSource,
   syncUserCalendar,
+  setUserHomeLocation,
+  sendUserLocation,
 } from "../services/api.js";
 import { SteamIcon, FaceitIcon, TeamSpeakIcon } from "../components/Icons.js";
 import {
   User,
   Calendar,
   MapPin,
+  Car,
+  Navigation,
   X,
   Edit3,
   Camera,
@@ -70,6 +74,12 @@ export function Profile() {
   const [calUrl, setCalUrl] = useState("");
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarError, setCalendarError] = useState<string | null>(null);
+
+  // Location state
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [locLoading, setLocLoading] = useState(false);
+  const [locSuccess, setLocSuccess] = useState<string | null>(null);
+  const [locError, setLocError] = useState<string | null>(null);
 
   // Profile editing state (Name and Avatar)
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -216,6 +226,105 @@ export function Profile() {
       setCalendarError(err.message || "Ошибка синхронизации");
     } finally {
       setCalendarLoading(false);
+    }
+  };
+
+  const handleSetCurrentAsHome = () => {
+    if (!navigator.geolocation) {
+      setLocError("Геолокация не поддерживается вашим браузером");
+      return;
+    }
+    setLocLoading(true);
+    setLocError(null);
+    setLocSuccess(null);
+    triggerHaptic("selection");
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await setUserHomeLocation(telegramId, {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+          triggerHaptic("success");
+          setLocSuccess("🏠 Точка «Дом» успешно сохранена!");
+          setProfile((prev: any) => ({ ...prev, hasHomeLocation: true }));
+          setTimeout(() => setLocSuccess(null), 4000);
+        } catch (err: any) {
+          triggerHaptic("error");
+          setLocError(err.message || "Ошибка сохранения точки");
+        } finally {
+          setLocLoading(false);
+        }
+      },
+      (err) => {
+        setLocLoading(false);
+        triggerHaptic("error");
+        setLocError("Не удалось получить геопозицию: " + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleUpdateCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocError("Геолокация не поддерживается вашим браузером");
+      return;
+    }
+    setLocLoading(true);
+    setLocError(null);
+    setLocSuccess(null);
+    triggerHaptic("selection");
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await sendUserLocation(telegramId, {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            heading: pos.coords.heading || undefined,
+            speed: pos.coords.speed || undefined,
+          });
+          triggerHaptic("success");
+          const msg =
+            res.locationStatus === "home"
+              ? "🏠 Статус обновлён: Вы дома!"
+              : res.locationStatus === "transit"
+              ? `🚗 Статус обновлён: В пути (~${res.etaMinutes || 15} мин)`
+              : "📍 Статус обновлён: Не дома";
+          setLocSuccess(msg);
+          setTimeout(() => setLocSuccess(null), 4000);
+        } catch (err: any) {
+          triggerHaptic("error");
+          setLocError(err.message || "Ошибка отправки геопозиции");
+        } finally {
+          setLocLoading(false);
+        }
+      },
+      (err) => {
+        setLocLoading(false);
+        triggerHaptic("error");
+        setLocError("Не удалось получить геопозицию: " + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleClearHome = async () => {
+    try {
+      setLocLoading(true);
+      setLocError(null);
+      triggerHaptic("selection");
+      await setUserHomeLocation(telegramId, { clear: true });
+      triggerHaptic("success");
+      setProfile((prev: any) => ({ ...prev, hasHomeLocation: false }));
+      setLocSuccess("Точка «Дом» удалена.");
+      setTimeout(() => setLocSuccess(null), 4000);
+    } catch (err: any) {
+      triggerHaptic("error");
+      setLocError(err.message || "Ошибка сброса");
+    } finally {
+      setLocLoading(false);
     }
   };
 
@@ -438,27 +547,34 @@ export function Profile() {
         </div>
 
         {/* Geolocation Card */}
-        <div className="bg-[#2B2D31] border border-white/5 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+        <div
+          onClick={() => {
+            triggerHaptic("selection");
+            setLocationModalOpen(true);
+          }}
+          className="bg-[#2B2D31] border border-white/5 hover:border-[#8BA4CC]/30 rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all active:scale-[0.99]"
+        >
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-[#1E1F22] border border-white/5 flex items-center justify-center shrink-0 text-[#8BA4CC]">
               <MapPin className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="font-bold text-sm text-white">Геолокация</div>
+              <div className="font-bold text-sm text-white flex items-center gap-1.5">
+                <span>Геолокация и статус «Дома»</span>
+                {profile?.hasHomeLocation && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#23A55A]"></span>
+                )}
+              </div>
               <div className="text-xs text-[#949BA4] truncate mt-0.5 font-medium">
-                {profile?.hasHomeLocation ? "Точка дома сохранена" : "Отправь локацию боту"}
+                {profile?.hasHomeLocation
+                  ? "Точка «Дом» сохранена · Авто-статус активен"
+                  : "Нажми для сохранения точки «Дом»"}
               </div>
             </div>
           </div>
-          <span
-            className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg border ${
-              profile?.hasHomeLocation
-                ? "bg-[#23A55A]/10 text-[#23A55A] border-[#23A55A]/20"
-                : "bg-[#1E1F22] text-[#949BA4] border-white/5"
-            }`}
-          >
-            {profile?.hasHomeLocation ? "Активна" : "Не задана"}
-          </span>
+          <button className="px-2.5 py-1.5 rounded-lg bg-[#1E1F22] hover:bg-[#323336] text-[11px] font-semibold text-[#8BA4CC] border border-white/5 shrink-0 transition-all pointer-events-none">
+            {profile?.hasHomeLocation ? "Настроить" : "Задать"}
+          </button>
         </div>
       </section>
 
@@ -884,6 +1000,124 @@ export function Profile() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Geolocation Management Modal */}
+      {locationModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-[#8BA4CC]" />
+                <h3 className="text-sm font-bold text-white">Геолокация и статус «Дома»</h3>
+              </div>
+              <button
+                onClick={() => setLocationModalOpen(false)}
+                className="text-[#949BA4] hover:text-white text-lg font-bold px-2 py-0.5 rounded-lg hover:bg-white/5"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Status card */}
+            <div
+              className={`p-3 rounded-xl border space-y-1 ${
+                profile?.hasHomeLocation
+                  ? "bg-[#23A55A]/10 border-[#23A55A]/30 text-[#23A55A]"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-xs font-bold">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    profile?.hasHomeLocation ? "bg-[#23A55A]" : "bg-amber-500"
+                  }`}
+                />
+                <span>
+                  {profile?.hasHomeLocation
+                    ? "Точка «Дом» настроена"
+                    : "Точка «Дом» не сохранена"}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#DBDEE1]">
+                {profile?.hasHomeLocation
+                  ? "В радиусе 250м от этой точки ваш статус автоматически становится «Дома». При движении домой отображается ETA."
+                  : "Сохраните координаты дома, чтобы бот рассчитывал статус «Дома» и время в пути."}
+              </p>
+            </div>
+
+            {/* Success and error alerts */}
+            {locSuccess && (
+              <p className="text-xs text-[#23A55A] bg-[#23A55A]/10 p-2 rounded-lg border border-[#23A55A]/20 font-medium">
+                {locSuccess}
+              </p>
+            )}
+            {locError && (
+              <p className="text-xs text-red-400 bg-red-400/10 p-2 rounded-lg border border-red-400/20 font-medium">
+                {locError}
+              </p>
+            )}
+
+            {/* Actions */}
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={handleSetCurrentAsHome}
+                disabled={locLoading}
+                className="w-full py-2.5 px-3 rounded-xl text-xs bg-[#3F5F96] hover:bg-[#4D72B0] text-white font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+              >
+                <MapPin className="w-4 h-4" />
+                <span>
+                  {locLoading
+                    ? "Определение координат..."
+                    : profile?.hasHomeLocation
+                    ? "Перезаписать текущую точку как «Дом»"
+                    : "Задать текущую геопозицию как «Дом»"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleUpdateCurrentLocation}
+                disabled={locLoading}
+                className="w-full py-2.5 px-3 rounded-xl text-xs bg-[#1E1F22] hover:bg-[#323336] text-[#DBDEE1] hover:text-white font-semibold transition-all border border-white/5 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Navigation className="w-4 h-4 text-[#8BA4CC]" />
+                <span>Обновить текущую локацию</span>
+              </button>
+
+              {profile?.hasHomeLocation && (
+                <button
+                  type="button"
+                  onClick={handleClearHome}
+                  disabled={locLoading}
+                  className="w-full py-2 px-3 rounded-xl text-xs text-red-400 hover:text-red-300 hover:bg-red-400/10 transition-all font-medium cursor-pointer"
+                >
+                  Сбросить точку «Дом»
+                </button>
+              )}
+            </div>
+
+            {/* Telegram Bot Live Location hint */}
+            <div className="p-2.5 rounded-xl bg-[#1E1F22] border border-white/5 space-y-1 text-xs">
+              <p className="font-semibold text-white flex items-center gap-1.5">
+                <span>📱 Через Telegram бот</span>
+              </p>
+              <p className="text-[11px] text-[#949BA4] leading-relaxed">
+                Вы также можете нажать на скрепку 📎 в диалоге с ботом и выбрать <b>«Геопозиция»</b> или <b>«Транслировать геопозицию»</b> (Live Location на 1 час при выезде домой).
+              </p>
+            </div>
+
+            {/* Privacy note */}
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-[#949BA4] space-y-1">
+              <span className="font-semibold text-[#DBDEE1] block">🔒 100% приватность</span>
+              <p className="leading-relaxed">
+                Ваши точные координаты никому не видны. Друзья в команде видят только абстрактный статус: «Дома», «В пути ~15 мин» или «Не дома».
+              </p>
             </div>
           </div>
         </div>

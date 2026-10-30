@@ -1,6 +1,6 @@
 import type { GroupMemberView, ReadyStatusType } from "@readyon/shared";
 import { SteamIcon, FaceitIcon } from "./Icons.js";
-import { Car } from "lucide-react";
+import { Car, MapPin } from "lucide-react";
 
 interface Props {
   member: GroupMemberView;
@@ -115,11 +115,22 @@ export function MemberCard({ member, isSelf }: Props) {
               </span>
             ) : null}
 
-            {/* ETA chip */}
-            {os.locationStatus === "transit" && os.etaMinutes && (
+            {/* Location status chips */}
+            {os.locationStatus === "home" && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
+                <span>🏠 Дома</span>
+              </span>
+            )}
+            {os.locationStatus === "transit" && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-medium">
                 <Car className="w-3 h-3" />
-                <span>~{os.etaMinutes} мин</span>
+                <span>{os.etaMinutes ? `~${os.etaMinutes} мин` : "В пути"}</span>
+              </span>
+            )}
+            {os.locationStatus === "away" && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[#949BA4] text-[11px] font-medium">
+                <MapPin className="w-3 h-3" />
+                <span>Не дома</span>
               </span>
             )}
           </div>

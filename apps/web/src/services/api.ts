@@ -235,3 +235,35 @@ export async function syncUserCalendar(telegramId: string) {
   if (!res.ok) throw new Error("Failed to sync calendar");
   return res.json();
 }
+
+export async function setUserHomeLocation(
+  telegramId: string,
+  params: { latitude?: number; longitude?: number; clear?: boolean }
+) {
+  const res = await fetch(`${API_BASE}/api/users/${telegramId}/home`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to set home location");
+  }
+  return res.json();
+}
+
+export async function sendUserLocation(
+  telegramId: string,
+  location: { latitude: number; longitude: number; heading?: number; speed?: number; isLive?: boolean }
+) {
+  const res = await fetch(`${API_BASE}/api/users/${telegramId}/location`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(location),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to send location");
+  }
+  return res.json();
+}

@@ -8,7 +8,7 @@ import { linkCommand, unlinkCommand } from "./commands/link.js";
 import { pollCommand, handlePollCallback } from "./commands/poll.js";
 import { settingsCommand, handleSettingsCallback } from "./commands/settings.js";
 import { handleStatusCallback, handleGroupStatusRefresh } from "./callbacks/status.js";
-import { handleLocationUpdate } from "./handlers/location.js";
+import { handleLocationUpdate, setHomeCommand, locationStatusCommand } from "./handlers/location.js";
 import { prisma } from "../db/prisma.js";
 import { notificationEngine } from "../services/notification/engine.js";
 
@@ -25,6 +25,8 @@ export const BOT_COMMANDS = [
   { command: "poll", description: "Разослать опросник готовности пацанам" },
   { command: "group", description: "Твоя группа и ссылка-инвайт" },
   { command: "settings", description: "Настройки группы и напоминалок" },
+  { command: "sethome", description: "Задать точку «Дом»" },
+  { command: "location", description: "Статус геолокации" },
   { command: "link", description: "Привязать Steam / FACEIT" },
   { command: "ready", description: "Отметить готовность (🟢)" },
   { command: "maybe", description: "Маловероятно / попозже (🟡)" },
@@ -62,6 +64,8 @@ export function createBot(): Bot<BotContext> | null {
   bot.command("unlink", unlinkCommand);
   bot.command("poll", pollCommand);
   bot.command("settings", settingsCommand);
+  bot.command("sethome", setHomeCommand);
+  bot.command("location", locationStatusCommand);
   bot.command("test", async (ctx) => {
     if (!ctx.from) return;
     await notificationEngine.sendTestNotification(ctx.from.id);

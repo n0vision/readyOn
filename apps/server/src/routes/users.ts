@@ -4,6 +4,7 @@ import { steamService } from "../services/gaming/steam.js";
 import { FaceitService } from "../services/gaming/faceit.js";
 import { gamingPoller } from "../services/gaming/poller.js";
 import { notificationEngine } from "../services/notification/engine.js";
+import { locationService } from "../services/location/service.js";
 
 const faceitService = new FaceitService();
 
@@ -131,5 +132,56 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(400).send({ error: result.error || "Failed to send test notification" });
     }
     return { success: true };
+  });
+
+  // POST /api/users/:telegramId/home — сохранить или сбросить точку «Дом»
+  app.post<{
+    Params: { telegramId: string };
+    Body: { latitude?: number; longitude?: number; clear?: boolean };
+  }>("/:telegramId/home", async (req, reply) => {
+    const telegramId = BigInt(req.params.telegramId);
+    const user = await prisma.user.findUnique({ where: { telegramId } });
+    if (!user) return reply.status(404).send({ error: "User not found" });
+
+    if (req.body.clear) {
+      await locationService.setHomeLocation(user.id, null, null);
+      return { success: true, hasHomeLocation: false };
+    }
+
+    const { latitude, longitude } = req.body;
+    if (typeof latitude !== "number" || typeof longitude !== "number") {
+      return reply.status(400).send({ error: "Некорректные координаты" });
+    }
+
+    await locationService.setHomeLocation(user.id, latitude, longitude);
+    return { success: true, hasHomeLocation: true };
+  });
+
+  // POST /api/users/:telegramId/location — передать текущую геопозицию пользователя
+  app.post<{
+    Params: { telegramId: string };
+    Body: { latitude: number; longitude: number; heading?: number; speed?: number; isLive?: boolean };
+  }>("/:telegramId/location", async (req, reply) => {
+    const telegramId = BigInt(req.params.telegramId);
+    const user = await prisma.user.findUnique({ where: { telegramId } });
+    if (!user) return reply.status(404).send({ error: "User not found" });
+
+    const { latitude, longitude, heading, speed, isLive } = req.body;
+    if (typeof latitude !== "number" || typeof longitude !== "number") {
+      return reply.status(400).send({ error: "Некорректные координаты" });
+    }
+
+    const result = await locationService.updateCurrentLocation(user.id, latitude, longitude, {
+      heading,
+      speed,
+      isLive,
+    });
+
+    return {
+      success: true,
+      locationStatus: result?.status || null,
+      etaMinutes: result?.etaMinutes || null,
+      isHomeSet: result?.isHomeSet || false,
+    };
   });
 };

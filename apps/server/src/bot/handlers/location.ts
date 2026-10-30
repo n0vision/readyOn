@@ -1,9 +1,10 @@
 import type { BotContext } from "../index.js";
 import { prisma } from "../../db/prisma.js";
+import { locationService } from "../../services/location/service.js";
 
-// Радиус "дома" в метрах
-const HOME_RADIUS_METERS = 200;
-
+/**
+ * Обработка входящей геопозиции (обычная точка или Live Location)
+ */
 export async function handleLocationUpdate(ctx: BotContext) {
   if (!ctx.from) return;
 
@@ -14,83 +15,104 @@ export async function handleLocationUpdate(ctx: BotContext) {
   const user = await prisma.user.findUnique({ where: { telegramId } });
   if (!user) return;
 
-  // Если дом не задан — предложить сохранить текущую точку как "дом"
-  if (user.homeLatitude === null || user.homeLongitude === null) {
-    // Сохраняем как дом
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        homeLatitude: location.latitude,
-        homeLongitude: location.longitude,
-      },
-    });
+  const isLive = Boolean(location.live_period && location.live_period > 0);
+  const isMoving = Boolean(
+    location.heading !== undefined ||
+    (location.horizontal_accuracy && location.horizontal_accuracy > 0 && isLive)
+  );
 
-    await prisma.onlineStatus.upsert({
-      where: { userId: user.id },
-      update: { locationStatus: "home", etaMinutes: null },
-      create: { userId: user.id, locationStatus: "home", etaMinutes: null },
-    });
+  const isFirstHome = user.homeLatitude === null || user.homeLongitude === null;
 
+  const result = await locationService.updateCurrentLocation(
+    user.id,
+    location.latitude,
+    location.longitude,
+    {
+      heading: location.heading,
+      isLive,
+    }
+  );
+
+  if (!result) return;
+
+  // Если это первое сохранение дома
+  if (isFirstHome) {
     await ctx.reply(
-      "🏠 Твоя текущая геопозиция сохранена как «дом».\n\n" +
-        "Теперь я буду определять: дома ты, не дома, или в пути.\n" +
-        "Чтобы обновить, отправь /sethome с нового места."
+      "🏠 **Точка «Дом» успешно сохранена!**\n\n" +
+        "Теперь readyOn автоматически понимает твой статус:\n" +
+        "• 🏠 **Дома** — когда ты в радиусе 250м\n" +
+        "• 🚗 **В пути (~N мин)** — когда включена трансляция геопозиции\n" +
+        "• 📍 **Не дома** — когда ты по делам\n\n" +
+        "Команда `/sethome` позволит перезаписать домашнюю точку в любое время."
     );
     return;
   }
 
-  // Вычислить расстояние до дома
-  const distance = haversineDistance(
-    location.latitude,
-    location.longitude,
-    user.homeLatitude,
-    user.homeLongitude
-  );
-
-  let locationStatus: string;
-  let etaMinutes: number | null = null;
-
-  if (distance <= HOME_RADIUS_METERS) {
-    locationStatus = "home";
-  } else {
-    // Грубая оценка ETA: средняя скорость в городе ~30 км/ч
-    etaMinutes = Math.round((distance / 1000 / 30) * 60);
-    if (etaMinutes < 1) etaMinutes = 1;
-
-    // Если "живая" локация и есть heading — значит в движении
-    if (location.heading || (location.live_period && location.live_period > 0)) {
-      locationStatus = "transit";
+  // Для обычного одиночного сообщения с локацией (не Live Location трансляция) отправляем ответ
+  if (!ctx.editedMessage) {
+    if (result.status === "home") {
+      await ctx.reply("🏠 **Ты дома!** Статус в скваде обновлён: готов к каткам.");
+    } else if (result.status === "transit") {
+      await ctx.reply(
+        `🚗 **Ты в пути домой!**\nОриентировочное время прибытия: **~${result.etaMinutes} мин** (расстояние ${(result.distanceMeters / 1000).toFixed(1)} км).`
+      );
     } else {
-      locationStatus = "away";
+      await ctx.reply(
+        `📍 **Ты не дома** (расстояние до дома: ${(result.distanceMeters / 1000).toFixed(1)} км).\n` +
+          `Чтобы команда видела твой ETA, включи «Транслировать геопозицию» (Live Location).`
+      );
     }
   }
-
-  await prisma.onlineStatus.upsert({
-    where: { userId: user.id },
-    update: { locationStatus, etaMinutes, lastUpdated: new Date() },
-    create: { userId: user.id, locationStatus, etaMinutes },
-  });
 }
 
 /**
- * Haversine formula — расстояние между двумя точками на сфере (в метрах)
+ * Команда /sethome — задать домашнюю точку
  */
-function haversineDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371000; // радиус Земли в метрах
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+export async function setHomeCommand(ctx: BotContext) {
+  await ctx.reply(
+    "📍 **Настройка домашней точки**\n\n" +
+      "Чтобы бот автоматически рассчитывал, дома ты или сколько тебе ехать:\n" +
+      "1. Нажми на скрепку 📎 (или значок «+»)\n" +
+      "2. Выбери **«Геопозиция»** (Location)\n" +
+      "3. Отправь **«Отправить свою геопозицию»** прямо из дома.\n\n" +
+      "Либо открой Mini App → вкладка **«Профиль»** → кнопка **«Задать текущую геопозицию как Дом»**."
+  );
 }
 
-function toRad(deg: number): number {
-  return (deg * Math.PI) / 180;
+/**
+ * Команда /location — проверить текущий статус геолокации
+ */
+export async function locationStatusCommand(ctx: BotContext) {
+  if (!ctx.from) return;
+  const telegramId = BigInt(ctx.from.id);
+  const user = await prisma.user.findUnique({
+    where: { telegramId },
+    include: { onlineStatus: true },
+  });
+
+  if (!user) return;
+
+  if (user.homeLatitude === null || user.homeLongitude === null) {
+    await ctx.reply(
+      "📍 Точка «Дом» пока не настроена.\nИспользуй /sethome или настрой в Mini App (вкладка «Профиль»)."
+    );
+    return;
+  }
+
+  const os = user.onlineStatus;
+  if (!os?.locationStatus) {
+    await ctx.reply(
+      "🏠 Точка «Дом» сохранена!\n" +
+        "Отправь боту геопозицию 📎, чтобы обновить свой статус: дома ты или в пути."
+    );
+    return;
+  }
+
+  if (os.locationStatus === "home") {
+    await ctx.reply("🏠 Текущий статус: **Дома**.");
+  } else if (os.locationStatus === "transit") {
+    await ctx.reply(`🚗 Текущий статус: **В пути** (~${os.etaMinutes || 15} мин).`);
+  } else {
+    await ctx.reply("📍 Текущий статус: **Не дома**.");
+  }
 }

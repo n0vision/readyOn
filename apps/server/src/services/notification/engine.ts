@@ -450,6 +450,89 @@ export class NotificationEngine {
       }
     }
   }
+
+  /**
+   * Уведомить готовых друзей, что игрок вернулся домой
+   */
+  async notifyFriendArrivedHome(userId: number) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        dailyStatuses: { where: { date: getToday() }, take: 1 },
+        groupMembers: {
+          include: {
+            group: {
+              include: {
+                members: {
+                  include: {
+                    user: {
+                      include: {
+                        dailyStatuses: { where: { date: getToday() }, take: 1 },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) return;
+
+    // Уведомляем только если сам игрок сегодня планировал играть (READY / UNLIKELY)
+    const userTodayStatus = user.dailyStatuses?.[0]?.status;
+    if (userTodayStatus !== "READY" && userTodayStatus !== "UNLIKELY") return;
+
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const notifiedUserIds = new Set<number>();
+    notifiedUserIds.add(user.id);
+
+    for (const gm of user.groupMembers) {
+      for (const m of gm.group.members) {
+        const friend = m.user;
+        if (notifiedUserIds.has(friend.id)) continue;
+
+        const isFriendReady = friend.dailyStatuses?.[0]?.status === "READY";
+        if (!isFriendReady) continue;
+
+        // Check debounce
+        const recentAlert = await prisma.notificationLog.findFirst({
+          where: {
+            userId: friend.id,
+            type: `friend_arrived_home_${user.id}`,
+            createdAt: { gte: twoHoursAgo },
+          },
+        });
+
+        if (!recentAlert) {
+          notifiedUserIds.add(friend.id);
+
+          const text =
+            `🏠 **${user.displayName} добрался домой!**\n\n` +
+            `Готовьте лобби, скоро стартуем катку!`;
+
+          const keyboard = this.getMiniAppKeyboard({
+            text: "📊 Статусы сквада",
+            data: "groups:status_all",
+          });
+
+          const sent = await this.sendToUser(friend.telegramId, text, keyboard);
+          if (sent) {
+            await prisma.notificationLog.create({
+              data: {
+                userId: friend.id,
+                type: `friend_arrived_home_${user.id}`,
+                message: text,
+                sent: true,
+              },
+            });
+          }
+        }
+      }
+    }
+  }
 }
 
 export const notificationEngine = new NotificationEngine();
