@@ -187,3 +187,51 @@ export async function sendTestNotification(telegramId: string) {
   }
   return res.json();
 }
+
+export async function fetchUserCalendar(telegramId: string) {
+  const res = await fetch(`${API_BASE}/api/calendar/${telegramId}`);
+  if (!res.ok) throw new Error("Failed to fetch calendar");
+  return res.json();
+}
+
+export async function uploadCalendarFile(telegramId: string, name: string, icsContent: string) {
+  const res = await fetch(`${API_BASE}/api/calendar/${telegramId}/upload`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, icsContent }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to upload calendar");
+  }
+  return res.json();
+}
+
+export async function subscribeCalendarUrl(telegramId: string, name: string, url: string) {
+  const res = await fetch(`${API_BASE}/api/calendar/${telegramId}/url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, url }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to subscribe to calendar URL");
+  }
+  return res.json();
+}
+
+export async function deleteCalendarSource(telegramId: string, sourceId: number) {
+  const res = await fetch(`${API_BASE}/api/calendar/${telegramId}/${sourceId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete calendar source");
+  return res.json();
+}
+
+export async function syncUserCalendar(telegramId: string) {
+  const res = await fetch(`${API_BASE}/api/calendar/${telegramId}/sync`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to sync calendar");
+  return res.json();
+}

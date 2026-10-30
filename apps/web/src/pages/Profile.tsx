@@ -6,9 +6,29 @@ import {
   updateUserProfile,
   updateUserNotifications,
   sendTestNotification,
+  fetchUserCalendar,
+  uploadCalendarFile,
+  subscribeCalendarUrl,
+  deleteCalendarSource,
+  syncUserCalendar,
 } from "../services/api.js";
 import { SteamIcon, FaceitIcon, TeamSpeakIcon } from "../components/Icons.js";
-import { User, Calendar, MapPin, X, Edit3, Camera, Bell } from "lucide-react";
+import {
+  User,
+  Calendar,
+  MapPin,
+  X,
+  Edit3,
+  Camera,
+  Bell,
+  Trash2,
+  Plus,
+  RefreshCw,
+  Upload,
+  Link2,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
 import { triggerHaptic } from "../utils/haptics.js";
 
 type EditPlatform = "steam" | "faceit" | "ts" | null;
@@ -42,6 +62,15 @@ export function Profile() {
   const [testingNotif, setTestingNotif] = useState(false);
   const [testSuccess, setTestSuccess] = useState<string | null>(null);
 
+  // Calendar integration state
+  const [calendarData, setCalendarData] = useState<any>(null);
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarTab, setCalendarTab] = useState<"url" | "file">("url");
+  const [calName, setCalName] = useState("");
+  const [calUrl, setCalUrl] = useState("");
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+
   // Profile editing state (Name and Avatar)
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState("");
@@ -49,11 +78,21 @@ export function Profile() {
 
   const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
 
+  const loadCalendar = async () => {
+    try {
+      const data = await fetchUserCalendar(telegramId);
+      setCalendarData(data);
+    } catch (err) {
+      console.error("Failed to load calendar:", err);
+    }
+  };
+
   const loadProfile = async () => {
     try {
       setLoading(true);
       const data = await fetchUserProfile(telegramId);
       setProfile(data);
+      await loadCalendar();
 
       if (data.notificationSettings && typeof data.notificationSettings === "object") {
         setNotifSettings({
@@ -110,6 +149,73 @@ export function Profile() {
       setTimeout(() => setTestSuccess(null), 5000);
     } finally {
       setTestingNotif(false);
+    }
+  };
+
+  const handleSubscribeUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!calUrl.trim()) return;
+    try {
+      setCalendarLoading(true);
+      setCalendarError(null);
+      triggerHaptic("selection");
+      await subscribeCalendarUrl(telegramId, calName.trim() || "Календарь", calUrl.trim());
+      triggerHaptic("success");
+      setCalUrl("");
+      setCalName("");
+      await loadCalendar();
+    } catch (err: any) {
+      triggerHaptic("error");
+      setCalendarError(err.message || "Ошибка подключения календаря");
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setCalendarLoading(true);
+      setCalendarError(null);
+      triggerHaptic("selection");
+      const text = await file.text();
+      const fileName = file.name.replace(/\.ics$/i, "");
+      await uploadCalendarFile(telegramId, fileName || "Загруженный календарь", text);
+      triggerHaptic("success");
+      await loadCalendar();
+    } catch (err: any) {
+      triggerHaptic("error");
+      setCalendarError(err.message || "Ошибка загрузки .ics файла");
+    } finally {
+      setCalendarLoading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleDeleteCalendar = async (sourceId: number) => {
+    try {
+      triggerHaptic("selection");
+      await deleteCalendarSource(telegramId, sourceId);
+      await loadCalendar();
+    } catch (err) {
+      console.error("Failed to delete calendar source:", err);
+    }
+  };
+
+  const handleSyncNow = async () => {
+    try {
+      setCalendarLoading(true);
+      triggerHaptic("selection");
+      await syncUserCalendar(telegramId);
+      triggerHaptic("success");
+      await loadCalendar();
+    } catch (err: any) {
+      triggerHaptic("error");
+      setCalendarError(err.message || "Ошибка синхронизации");
+    } finally {
+      setCalendarLoading(false);
     }
   };
 
@@ -298,22 +404,37 @@ export function Profile() {
           </button>
         </div>
 
-        {/* Calendar Card */}
-        <div className="bg-[#2B2D31] border border-white/5 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+        {/* Calendar Card (Smart Auto-Status) */}
+        <div
+          onClick={() => {
+            triggerHaptic("selection");
+            setCalendarModalOpen(true);
+          }}
+          className="bg-[#2B2D31] border border-white/5 rounded-2xl p-3.5 flex items-center justify-between gap-3 hover:border-white/10 transition-all cursor-pointer shadow-sm active:scale-[0.99]"
+        >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-[#1E1F22] border border-white/5 flex items-center justify-center shrink-0 text-[#949BA4]">
+            <div className="w-10 h-10 rounded-xl bg-[#1E1F22] border border-white/5 flex items-center justify-center shrink-0 text-[#8BA4CC]">
               <Calendar className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="font-bold text-sm text-white">Календарь (ICS)</div>
+              <div className="font-bold text-sm text-white flex items-center gap-1.5">
+                <span>Календарь и расписание</span>
+                {calendarData?.sources?.length > 0 && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#23A55A]"></span>
+                )}
+              </div>
               <div className="text-xs text-[#949BA4] truncate mt-0.5 font-medium">
-                Авто-статус занятости
+                {calendarData?.calculatedStatus?.comment
+                  ? calendarData.calculatedStatus.comment
+                  : calendarData?.sources?.length > 0
+                  ? `${calendarData.sources.length} подключен(о) · Авто-статус активен`
+                  : "Автоматический статус из расписания (ICS)"}
               </div>
             </div>
           </div>
-          <span className="text-[11px] text-[#949BA4]/70 px-2 py-1 rounded-lg bg-[#1E1F22] border border-white/5">
-            {profile?.calendarSources?.length > 0 ? "Включен" : "Не подключен"}
-          </span>
+          <button className="px-2.5 py-1.5 rounded-lg bg-[#1E1F22] hover:bg-[#323336] text-[11px] font-semibold text-[#8BA4CC] border border-white/5 shrink-0 transition-all pointer-events-none">
+            {calendarData?.sources?.length > 0 ? "Настроить" : "Подключить"}
+          </button>
         </div>
 
         {/* Geolocation Card */}
@@ -552,6 +673,218 @@ export function Profile() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Calendar Management Modal */}
+      {calendarModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-[#8BA4CC]" />
+                <h3 className="text-sm font-bold text-white">Календарь и авто-статус</h3>
+              </div>
+              <button
+                onClick={() => setCalendarModalOpen(false)}
+                className="text-[#949BA4] hover:text-white text-lg font-bold px-2 py-0.5 rounded-lg hover:bg-white/5"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Smart calculation card */}
+            {calendarData?.calculatedStatus && (
+              <div className="p-3 rounded-xl bg-[#23A55A]/10 border border-[#23A55A]/30 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#23A55A]">
+                  <span className="w-2 h-2 rounded-full bg-[#23A55A] animate-pulse" />
+                  <span>
+                    {calendarData.calculatedStatus.status === "READY"
+                      ? `Авто-статус: Готов с ${calendarData.calculatedStatus.availableFrom}`
+                      : "Авто-статус: Сегодня занят"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#DBDEE1]">
+                  {calendarData.calculatedStatus.comment}
+                </p>
+              </div>
+            )}
+
+            {/* Today's events */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-[#949BA4] uppercase tracking-wider">
+                  События на сегодня ({calendarData?.todayEvents?.length || 0})
+                </span>
+                {calendarData?.sources?.length > 0 && (
+                  <button
+                    onClick={handleSyncNow}
+                    disabled={calendarLoading}
+                    className="text-[11px] text-[#8BA4CC] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${calendarLoading ? "animate-spin" : ""}`} />
+                    <span>Обновить</span>
+                  </button>
+                )}
+              </div>
+
+              {calendarData?.todayEvents?.length > 0 ? (
+                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                  {calendarData.todayEvents.map((ev: any) => {
+                    const start = new Date(ev.startTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                    const end = new Date(ev.endTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                    return (
+                      <div
+                        key={ev.id}
+                        className="p-2 rounded-lg bg-[#1E1F22] border border-white/5 flex items-center justify-between text-xs"
+                      >
+                        <span className="font-medium text-white truncate max-w-[170px]">
+                          {ev.title}
+                        </span>
+                        <span className="text-[11px] text-[#949BA4] shrink-0 font-mono">
+                          {start} – {end}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-[#949BA4] py-1 italic">
+                  На сегодня дел нет — готов катать в любое время!
+                </p>
+              )}
+            </div>
+
+            {/* Connected sources */}
+            {calendarData?.sources?.length > 0 && (
+              <div className="pt-1 border-t border-white/5">
+                <span className="text-xs font-semibold text-[#949BA4] uppercase tracking-wider block mb-2">
+                  Подключенные календари
+                </span>
+                <div className="space-y-1.5">
+                  {calendarData.sources.map((src: any) => (
+                    <div
+                      key={src.id}
+                      className="p-2 rounded-lg bg-[#1E1F22] border border-white/5 flex items-center justify-between text-xs"
+                    >
+                      <div className="truncate max-w-[190px]">
+                        <p className="font-semibold text-white truncate">{src.name}</p>
+                        <p className="text-[10px] text-[#949BA4]">
+                          {src.type === "ICS_FILE" ? "Файл .ics" : "Webcal / Ссылка"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteCalendar(src.id)}
+                        className="text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded hover:bg-red-400/10 cursor-pointer"
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add new calendar tab */}
+            <div className="pt-2 border-t border-white/5 space-y-3">
+              <span className="text-xs font-semibold text-[#949BA4] uppercase tracking-wider block">
+                Добавить календарь
+              </span>
+
+              {/* Tabs */}
+              <div className="grid grid-cols-2 gap-1 p-1 bg-[#1E1F22] rounded-xl border border-white/5 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setCalendarTab("url")}
+                  className={`py-1.5 rounded-lg transition-all ${
+                    calendarTab === "url"
+                      ? "bg-[#3F5F96] text-white shadow-sm"
+                      : "text-[#949BA4] hover:text-white"
+                  }`}
+                >
+                  По ссылке (URL)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalendarTab("file")}
+                  className={`py-1.5 rounded-lg transition-all ${
+                    calendarTab === "file"
+                      ? "bg-[#3F5F96] text-white shadow-sm"
+                      : "text-[#949BA4] hover:text-white"
+                  }`}
+                >
+                  Файл .ics
+                </button>
+              </div>
+
+              {calendarError && (
+                <p className="text-xs text-red-400 bg-red-400/10 p-2 rounded-lg border border-red-400/20">
+                  {calendarError}
+                </p>
+              )}
+
+              {calendarTab === "url" ? (
+                <form onSubmit={handleSubscribeUrl} className="space-y-2">
+                  <input
+                    type="text"
+                    value={calName}
+                    onChange={(e) => setCalName(e.target.value)}
+                    placeholder="Название (напр. Работа, Google)"
+                    className="w-full bg-[#1E1F22] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-[#949BA4]/50 focus:outline-none focus:border-[#3F5F96]"
+                  />
+                  <input
+                    type="url"
+                    value={calUrl}
+                    onChange={(e) => setCalUrl(e.target.value)}
+                    placeholder="https://... или webcal://..."
+                    required
+                    className="w-full bg-[#1E1F22] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-[#949BA4]/50 focus:outline-none focus:border-[#3F5F96]"
+                  />
+                  <p className="text-[10px] text-[#949BA4]">
+                    Подходит «Секретный адрес в формате iCal» из настроек Google Calendar, Apple Calendar или Яндекс.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={calendarLoading || !calUrl.trim()}
+                    className="w-full py-2.5 rounded-xl text-xs bg-[#3F5F96] hover:bg-[#4D72B0] text-white font-bold transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {calendarLoading ? "Подключение..." : "Подключить по ссылке"}
+                  </button>
+                </form>
+              ) : (
+                <div className="space-y-2">
+                  <label className="block w-full border-2 border-dashed border-white/15 hover:border-[#8BA4CC]/40 rounded-xl p-4 text-center cursor-pointer transition-colors bg-[#1E1F22]/50 hover:bg-[#1E1F22]">
+                    <Upload className="w-5 h-5 text-[#8BA4CC] mx-auto mb-1.5" />
+                    <span className="text-xs font-semibold text-white block">
+                      Выберите .ics файл
+                    </span>
+                    <span className="text-[10px] text-[#949BA4]">
+                      Экспортированный файл календаря
+                    </span>
+                    <input
+                      type="file"
+                      accept=".ics,text/calendar"
+                      onChange={handleFileUpload}
+                      disabled={calendarLoading}
+                      className="hidden"
+                    />
+                  </label>
+                  {calendarLoading && (
+                    <p className="text-xs text-center text-[#8BA4CC] animate-pulse">
+                      Загрузка и парсинг...
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

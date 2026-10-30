@@ -4,6 +4,7 @@ import { createBot, BOT_COMMANDS } from "./bot/index.js";
 import { prisma } from "./db/prisma.js";
 import { redis } from "./db/redis.js";
 import { gamingPoller } from "./services/gaming/poller.js";
+import { calendarPoller } from "./services/calendar/poller.js";
 import { notificationEngine } from "./services/notification/engine.js";
 import { initSocketServer } from "./websocket/index.js";
 
@@ -32,6 +33,9 @@ async function main() {
   // Start background gaming poller (Steam, FACEIT, TeamSpeak)
   gamingPoller.start();
 
+  // Start background calendar poller
+  calendarPoller.start();
+
   // Start Telegram bot (if configured)
   const bot = createBot();
   if (bot) {
@@ -55,6 +59,7 @@ async function main() {
   const shutdown = async () => {
     console.log("\n🛑 Shutting down...");
     gamingPoller.stop();
+    calendarPoller.stop();
     notificationEngine.stop();
     if (bot) bot.stop();
     await server.close();
