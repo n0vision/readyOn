@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { Dashboard } from "./pages/Dashboard.js";
 import { Groups } from "./pages/Groups.js";
-import { Friends } from "./pages/Friends.js";
 import { Profile } from "./pages/Profile.js";
 import { NavBar } from "./components/NavBar.js";
 
@@ -12,7 +11,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/groups" element={<Groups />} />
-          <Route path="/friends" element={<Friends />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </main>

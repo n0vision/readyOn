@@ -116,57 +116,81 @@ export function Dashboard() {
   const readyCount =
     selectedGroup?.members.filter((m) => m.dailyStatus?.status === "READY").length || 0;
   const totalCount = selectedGroup?.members.length || 0;
+  const targetSize = (selectedGroup as any)?.group?.targetSize || 5;
+
+  const handleShareInvite = () => {
+    if (!selectedGroup) return;
+    const inviteUrl = `https://t.me/readyOnCS_bot?start=group_${selectedGroup.group.inviteCode}`;
+    const text = `Го в CS2! Заходи в пати в readyOn:`;
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(text)}`;
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(shareUrl);
+    } else {
+      window.open(shareUrl, "_blank");
+    }
+  };
 
   return (
-    <div className="p-4 space-y-5 max-w-lg mx-auto">
-      {/* Header */}
+    <div className="p-4 space-y-4 max-w-lg mx-auto">
+      {/* Tactical Top Bar */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">readyOn 🎮</h1>
-          <p className="text-xs text-[var(--tg-theme-hint-color)]">
-            {new Date().toLocaleDateString("ru", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </p>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#00e676]/15 border border-[#00e676]/30 flex items-center justify-center text-[#00e676] text-lg font-bold shadow-[0_0_12px_rgba(0,230,118,0.25)]">
+            ⌖
+          </div>
+          <div>
+            <h1 className="text-base font-black tracking-wider text-white">readyOn</h1>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-white/40">
+              CS2 Squad Coordinator
+            </p>
+          </div>
         </div>
-        <button
-          onClick={loadData}
-          disabled={loading || updating}
-          className="text-xs px-2.5 py-1.5 rounded-lg bg-[var(--tg-theme-secondary-bg-color)] border border-white/10 hover:border-white/20 transition-all flex items-center gap-1.5"
-        >
-          <span className={loading || updating ? "animate-spin" : ""}>🔄</span>
-          <span>Обновить</span>
-        </button>
+
+        <div className="flex items-center gap-2">
+          {selectedGroup && (
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#00e676]/15 text-[#00e676] border border-[#00e676]/30 shadow-[0_0_10px_rgba(0,230,118,0.2)]">
+              {readyCount}/{totalCount} готовы
+            </span>
+          )}
+          <button
+            onClick={loadData}
+            disabled={loading || updating}
+            className="w-8 h-8 rounded-xl glass-panel flex items-center justify-center text-xs text-white/70 hover:text-white transition-all cursor-pointer"
+            title="Обновить"
+          >
+            <span className={loading || updating ? "animate-spin" : ""}>🔄</span>
+          </button>
+        </div>
       </div>
 
-      {/* Status selector */}
-      <section className="space-y-2">
+      {/* Hero Status Card */}
+      <section className="glass-panel p-4 rounded-3xl space-y-3 border border-white/10 shadow-xl">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--tg-theme-hint-color)]">
-            Твой статус сегодня
+          <h2 className="text-[11px] font-extrabold uppercase tracking-widest text-white/50">
+            Твой статус
           </h2>
           {availableFrom && currentStatus === "READY" && (
-            <span className="text-xs text-green-400 font-medium">Готов с {availableFrom}</span>
+            <span className="text-[11px] font-bold text-[#00e676] bg-[#00e676]/10 px-2 py-0.5 rounded-full border border-[#00e676]/20">
+              с {availableFrom}
+            </span>
           )}
         </div>
 
         <StatusSelector value={currentStatus} onChange={handleStatusChange} />
 
-        {/* Time picker modal / options */}
+        {/* Time chips */}
         {showTimePicker && (
-          <div className="mt-3 p-3 rounded-xl bg-[var(--tg-theme-secondary-bg-color)] border border-green-500/30 space-y-2 animate-in fade-in duration-200">
-            <div className="text-xs text-green-400 font-medium">Во сколько сможешь играть?</div>
+          <div className="p-3 rounded-2xl bg-black/40 border border-[#00e676]/30 space-y-2 animate-in fade-in duration-200">
+            <div className="text-[11px] font-bold text-[#00e676]">Во сколько готов играть?</div>
             <div className="grid grid-cols-4 gap-1.5">
               {TIME_OPTIONS.map((time) => (
                 <button
                   key={time}
                   onClick={() => handleSelectTime(time)}
-                  className={`py-1.5 text-xs rounded-lg transition-colors ${
+                  className={`py-1.5 text-xs rounded-xl font-bold transition-all ${
                     availableFrom === time
-                      ? "bg-green-600 text-white font-bold"
-                      : "bg-white/5 hover:bg-white/10 text-[var(--tg-theme-text-color)]"
+                      ? "bg-[#00e676] text-black shadow-[0_0_12px_rgba(0,230,118,0.4)]"
+                      : "bg-white/5 hover:bg-white/10 text-white/80"
                   }`}
                 >
                   {time}
@@ -177,6 +201,32 @@ export function Dashboard() {
         )}
       </section>
 
+      {/* Floating Squad Status / Action Banner */}
+      {selectedGroup && (
+        <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-[#151922] to-emerald-500/15 border border-amber-500/30 flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">🔥</span>
+            <div>
+              <div className="text-xs font-bold text-white">
+                {targetSize - readyCount > 0
+                  ? `Ещё ${targetSize - readyCount} чел. до фулл-стака!`
+                  : "Фулл-стак в сборе!"}
+              </div>
+              <div className="text-[10px] text-white/50">
+                {selectedGroup.group.name} ({readyCount}/{totalCount} готовы)
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleShareInvite}
+            className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white text-black hover:bg-white/90 transition-all flex items-center gap-1 shadow-md cursor-pointer"
+          >
+            <span>↗️</span>
+            <span>Инвайт</span>
+          </button>
+        </div>
+      )}
+
       {/* Group Selector (if multiple) */}
       {groups.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -184,10 +234,10 @@ export function Dashboard() {
             <button
               key={g.id}
               onClick={() => fetchGroupStatus(g.id).then(setSelectedGroup)}
-              className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${
+              className={`text-xs font-bold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all ${
                 selectedGroup?.group.id === g.id
-                  ? "bg-[var(--tg-theme-button-color)] text-white"
-                  : "bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-hint-color)]"
+                  ? "bg-[#00e676] text-black shadow-[0_0_12px_rgba(0,230,118,0.3)]"
+                  : "glass-panel text-white/60 hover:text-white"
               }`}
             >
               {g.name}
@@ -196,39 +246,39 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Group members list */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--tg-theme-hint-color)]">
-            {selectedGroup ? `👥 ${selectedGroup.group.name}` : "👥 Группа"}
+      {/* Squad Roster */}
+      <section className="space-y-2.5">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-[11px] font-extrabold uppercase tracking-widest text-white/50">
+            {selectedGroup ? `👥 Состав ${selectedGroup.group.name}` : "👥 Состав сквада"}
           </h2>
-          {selectedGroup && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 font-medium border border-green-500/20">
-              {readyCount} из {totalCount} готовы
-            </span>
-          )}
+          <span className="text-[11px] text-white/40 font-medium">
+            {totalCount} чел.
+          </span>
         </div>
 
         {loading ? (
-          <div className="rounded-xl bg-[var(--tg-theme-secondary-bg-color)] p-6 text-center text-[var(--tg-theme-hint-color)] animate-pulse">
-            Загрузка статусов...
+          <div className="glass-panel rounded-2xl p-6 text-center text-xs text-white/40 animate-pulse">
+            Синхронизация статусов с сервером...
           </div>
         ) : selectedGroup && selectedGroup.members.length > 0 ? (
           <div className="space-y-2">
             {selectedGroup.members.map((member) => (
-              <MemberCard key={member.id} member={member} />
+              <MemberCard
+                key={member.id}
+                member={member}
+                isSelf={String(member.id) === "1" || member.displayName.includes("Никита")}
+              />
             ))}
           </div>
         ) : (
-          <div className="rounded-xl bg-[var(--tg-theme-secondary-bg-color)] p-5 text-center text-[var(--tg-theme-hint-color)] space-y-2">
-            <p className="text-2xl">👥</p>
-            <p className="font-medium text-sm text-[var(--tg-theme-text-color)]">
-              У тебя пока нет групп
-            </p>
-            <p className="text-xs">
-              Создай группу в боте командой:
+          <div className="glass-panel rounded-2xl p-6 text-center text-white/50 space-y-2">
+            <p className="text-3xl">👥</p>
+            <p className="font-bold text-sm text-white">У тебя пока нет групп</p>
+            <p className="text-xs text-white/60">
+              Создай группу командой в боте:
               <br />
-              <code className="inline-block mt-1.5 px-2 py-1 rounded bg-black/30 text-white font-mono">
+              <code className="inline-block mt-2 px-2 py-1 rounded bg-black/50 text-[#00e676] font-mono text-xs border border-white/10">
                 /group create CS Пацаны
               </code>
             </p>

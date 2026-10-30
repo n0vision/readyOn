@@ -1,33 +1,38 @@
 import type { ReadyStatusType } from "@readyon/shared";
+import { THEME } from "../styles/theme.js";
 
 interface Props {
   value: ReadyStatusType;
   onChange: (status: ReadyStatusType) => void;
 }
 
-const options: { status: ReadyStatusType; emoji: string; label: string; color: string }[] = [
-  { status: "READY", emoji: "🟢", label: "Готов", color: "border-green-500 bg-green-500/10" },
-  { status: "UNLIKELY", emoji: "🟡", label: "Может быть", color: "border-yellow-500 bg-yellow-500/10" },
-  { status: "UNAVAILABLE", emoji: "🔴", label: "Не сегодня", color: "border-red-500 bg-red-500/10" },
+const statusOptions: { status: ReadyStatusType; label: string }[] = [
+  { status: "READY", label: "ГОТОВ" },
+  { status: "UNLIKELY", label: "ПОПОЗЖЕ" },
+  { status: "UNAVAILABLE", label: "НЕ СЕГОДНЯ" },
 ];
 
 export function StatusSelector({ value, onChange }: Props) {
   return (
-    <div className="flex gap-2">
-      {options.map((opt) => (
-        <button
-          key={opt.status}
-          onClick={() => onChange(opt.status)}
-          className={`flex-1 py-3 px-2 rounded-xl border-2 text-center transition-all ${
-            value === opt.status
-              ? opt.color + " scale-105"
-              : "border-white/10 bg-[var(--tg-theme-secondary-bg-color)]"
-          }`}
-        >
-          <div className="text-lg">{opt.emoji}</div>
-          <div className="text-xs mt-1">{opt.label}</div>
-        </button>
-      ))}
+    <div className="p-1 rounded-2xl bg-black/40 border border-white/5 flex gap-1.5 shadow-inner">
+      {statusOptions.map((opt) => {
+        const theme = THEME.status[opt.status];
+        const isSelected = value === opt.status;
+
+        return (
+          <button
+            key={opt.status}
+            onClick={() => onChange(opt.status)}
+            className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+              isSelected
+                ? theme.activeButton
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

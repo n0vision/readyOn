@@ -9,13 +9,13 @@ test.describe("Telegram Mini App UI", () => {
     await expect(page.locator("h1")).toContainText("readyOn");
 
     // Wait for group header to load with real name
-    await expect(page.locator("text=CS Пацаны")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=CS Пацаны").first()).toBeVisible({ timeout: 10000 });
 
     // Check members list
     await expect(page.locator("text=Ivan")).toBeVisible();
 
     // Check ready counter badge
-    await expect(page.locator("text=/.*готовы.*/")).toBeVisible();
+    await expect(page.locator("text=/.*готовы.*/").first()).toBeVisible();
 
     // Save dashboard screenshot
     await page.screenshot({
@@ -26,26 +26,26 @@ test.describe("Telegram Mini App UI", () => {
   test("User can switch status in Mini App", async ({ page }) => {
     await page.goto("/?userId=619219842");
 
-    // Click "Может быть" (🟡)
-    const maybeBtn = page.getByRole("button", { name: /Может быть/i });
+    // Click "Попозже"
+    const maybeBtn = page.getByRole("button", { name: /ПОПОЗЖЕ|Может быть/i });
     await expect(maybeBtn).toBeVisible();
     await maybeBtn.click();
 
     // Should not show time picker
-    await expect(page.locator("text=Во сколько сможешь играть?")).not.toBeVisible();
+    await expect(page.locator("text=/Во сколько.*/")).not.toBeVisible();
 
-    // Click "Готов" (🟢)
-    const readyBtn = page.getByRole("button", { name: /Готов/i });
+    // Click "Готов"
+    const readyBtn = page.getByRole("button", { name: /ГОТОВ|Готов/i });
     await readyBtn.click();
 
     // Time picker should appear
-    await expect(page.locator("text=Во сколько сможешь играть?")).toBeVisible();
+    await expect(page.locator("text=/Во сколько.*/")).toBeVisible();
 
     // Click "19:00"
     await page.getByRole("button", { name: "19:00" }).click();
 
     // Time picker closes and label shows time
-    await expect(page.locator("text=Готов с 19:00")).toBeVisible();
+    await expect(page.locator("text=/.*19:00.*/").first()).toBeVisible();
   });
 
   test("Navigation across tabs works properly", async ({ page }) => {
@@ -69,7 +69,7 @@ test.describe("Telegram Mini App UI", () => {
     await expect(page.locator("text=FACEIT")).toBeVisible();
 
     // Navigate back to Dashboard
-    await page.getByRole("link", { name: /Статусы/i }).click();
+    await page.getByRole("link", { name: /Сквад|Статусы/i }).click();
     await expect(page.locator("h1")).toContainText("readyOn");
   });
 });
