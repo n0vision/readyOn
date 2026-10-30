@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ ПОЛЬЗОВАТЕЛИ ============
+
+model User {
+  id          Int      @id @default(autoincrement())
+  telegramId  BigInt   @unique @map("telegram_id")
+  username    String?
+  displayName String   @map("display_name")
+  avatarUrl   String?  @map("avatar_url")
+  
+  // Привязки к игровым платформам
+  steamId     String?  @map("steam_id")
+  faceitId    String?  @map("faceit_id")
+  tsIdentity  String?  @map("ts_identity")
+  
+  // Геолокация (зашифрованные координаты дома)
+  homeLatitude  Float?  @map("home_latitude")
+  homeLongitude Float?  @map("home_longitude")
+  
+  // Настройки уведомлений
+  notificationSettings Json @default("{}") @map("notification_settings")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Связи
+  dailyStatuses   DailyStatus[]
+  onlineStatus    OnlineStatus?
+  calendarSources CalendarSource[]
+  calendarEvents  CalendarEvent[]
+  groupMembers    GroupMember[]
+  
+  sentRequests     Friendship[] @relation("SentRequests")
+  receivedRequests Friendship[] @relation("ReceivedRequests")
+  
+  notifications   NotificationLog[]
+
+  @@map("users")
+}
+
+// ============ СТАТУСЫ ГОТОВНОСТИ ============
+
+enum ReadyStatus {
+  READY       // 🟢 Готов
+  UNAVAILABLE // 🔴 Не могу
+  UNLIKELY    // 🟡 Маловероятно
+  UNSET       // ⚪ Не выставлен
+}
+
+model DailyStatus {
+  id             Int         @id @default(autoincrement())
+  userId         Int         @map("user_id")
+  date           DateTime    @db.Date
+  status         ReadyStatus @default(UNSET)
+  availableFrom  String?     @map("available_from")  // "19:00"
+  availableUntil String?     @map("available_until")  // "23:00"
+  comment        String?
+  
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("daily_statuses")
+}
+
+// ============ ОНЛАЙН-СТАТУСЫ (кэш) ============
+
+model OnlineStatus {
+  userId        Int     @id @map("user_id")
+  
+  // Steam
+  steamStatus   String? @map("steam_status")   // online, in_game, offline
+  steamGame     String? @map("steam_game")      // название игры
+  
+  // FACEIT
+  faceitStatus  String? @map("faceit_status")   // available, in_match, offline
+  faceitElo     Int?    @map("faceit_elo")
+  faceitLevel   Int?    @map("faceit_level")
+  
+  // TeamSpeak
+  tsStatus      String? @map("ts_status")       // connected, offline
+  tsChannel     String? @map("ts_channel")
+  
+  // Геолокация
+  locationStatus String? @map("location_status") // home, away, transit
+  etaMinutes     Int?    @map("eta_minutes")
+  
+  lastUpdated   DateTime @default(now()) @map("last_updated")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("online_statuses")
+}
+
+// ============ ДРУЗЬЯ ============
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+model Friendship {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  friendId  Int              @map("friend_id")
+  status    FriendshipStatus @default(PENDING)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User @relation("SentRequests", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("ReceivedRequests", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}
+
+// ============ ГРУППЫ ============
+
+model Group {
+  id         Int      @id @default(autoincrement())
+  name       String
+  inviteCode String   @unique @map("invite_code")
+  ownerId    Int      @map("owner_id")
+  avatarUrl  String?  @map("avatar_url")
+  maxMembers Int      @default(10) @map("max_members")
+  
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  members GroupMember[]
+
+  @@map("groups")
+}
+
+enum GroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model GroupMember {
+  id       Int       @id @default(autoincrement())
+  groupId  Int       @map("group_id")
+  userId   Int       @map("user_id")
+  role     GroupRole  @default(MEMBER)
+  
+  joinedAt DateTime  @default(now()) @map("joined_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+// ============ КАЛЕНДАРИ ============
+
+enum CalendarSourceType {
+  ICS_FILE     // Загруженный .ics файл
+  ICS_URL      // Подписка по URL
+  GOOGLE       // Google Calendar OAuth
+  CALDAV       // CalDAV (Yandex, Apple, etc.)
+}
+
+model CalendarSource {
+  id          Int                @id @default(autoincrement())
+  userId      Int                @map("user_id")
+  type        CalendarSourceType
+  name        String             // "Мой Google Calendar", "Расписание универа"
+  url         String?            // ICS URL или CalDAV URL
+  icsData     String?            @map("ics_data") @db.Text // Содержимое загруженного ICS
+  oauthToken  String?            @map("oauth_token")       // Зашифрованный OAuth token
+  isActive    Boolean            @default(true) @map("is_active")
+  syncInterval Int               @default(15) @map("sync_interval") // минуты
+  lastSynced  DateTime?          @map("last_synced")
+  
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events CalendarEvent[]
+
+  @@map("calendar_sources")
+}
+
+model CalendarEvent {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  sourceId   Int      @map("source_id")
+  externalId String   @map("external_id")
+  title      String?  // Может быть скрыто для приватности
+  startTime  DateTime @map("start_time")
+  endTime    DateTime @map("end_time")
+  isBusy     Boolean  @default(true) @map("is_busy")
+  
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source CalendarSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, externalId])
+  @@map("calendar_events")
+}
+
+// ============ УВЕДОМЛЕНИЯ ============
+
+model NotificationLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  type      String   // reminder, friend_ready, all_ready, etc.
+  message   String
+  sent      Boolean  @default(false)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_logs")
+}

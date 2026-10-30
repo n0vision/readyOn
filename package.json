@@ -1,0 +1,20 @@
+{
+  "name": "readyon",
+  "private": true,
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "start:dev": "powershell -ExecutionPolicy Bypass -File scripts/start-dev.ps1",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "db:generate": "pnpm --filter @readyon/server exec prisma generate",
+    "db:migrate": "pnpm --filter @readyon/server exec prisma migrate dev",
+    "db:push": "pnpm --filter @readyon/server exec prisma db push",
+    "docker:up": "docker compose -f docker-compose.dev.yml up -d",
+    "docker:down": "docker compose -f docker-compose.dev.yml down"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  }
+}

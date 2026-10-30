@@ -1,0 +1,35 @@
+import Fastify from "fastify";
+import cors from "@fastify/cors";
+import { statusRoutes } from "./routes/status.js";
+import { groupRoutes } from "./routes/groups.js";
+import { friendRoutes } from "./routes/friends.js";
+import { userRoutes } from "./routes/users.js";
+
+export async function createServer() {
+  const app = Fastify({
+    logger: {
+      level: "info",
+      transport: {
+        target: "pino-pretty",
+        options: { colorize: true },
+      },
+    },
+  });
+
+  // CORS for Mini App
+  await app.register(cors, {
+    origin: process.env.MINI_APP_URL || "http://localhost:5173",
+    credentials: true,
+  });
+
+  // Health check
+  app.get("/health", async () => ({ status: "ok", timestamp: new Date().toISOString() }));
+
+  // API routes
+  await app.register(statusRoutes, { prefix: "/api/status" });
+  await app.register(groupRoutes, { prefix: "/api/groups" });
+  await app.register(friendRoutes, { prefix: "/api/friends" });
+  await app.register(userRoutes, { prefix: "/api/users" });
+
+  return app;
+}
