@@ -20,9 +20,15 @@ body {
     radial-gradient(circle at 10% 25%, rgba(14, 165, 233, 0.04) 0%, transparent 30%);
   background-attachment: fixed;
   color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.font-hud {
+  font-family: 'Chakra Petch', 'Inter', -apple-system, sans-serif;
 }
 
 #root {

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { getCurrentTelegramId, fetchUserProfile, updateUserIntegrations } from "../services/api.js";
 import { SteamIcon, FaceitIcon } from "../components/Icons.js";
+import { User, Headphones, Calendar, MapPin, Check } from "lucide-react";
+import { triggerHaptic } from "../utils/haptics.js";
 
 type EditPlatform = "steam" | "faceit" | "ts" | null;
 
@@ -60,11 +62,11 @@ export function Profile() {
     <div className="p-4 space-y-5 max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-[var(--tg-theme-button-color)] flex items-center justify-center text-lg font-bold">
-          {profile?.displayName?.[0] || "👤"}
+        <div className="w-12 h-12 rounded-full bg-[#1e2535] border border-white/10 flex items-center justify-center text-lg font-bold text-white shadow-md">
+          {profile?.displayName?.[0] || <User className="w-5 h-5 text-white/70" />}
         </div>
         <div>
-          <h1 className="text-lg font-bold leading-tight">{profile?.displayName || "Профиль"}</h1>
+          <h1 className="font-hud text-lg font-bold leading-tight">{profile?.displayName || "Профиль"}</h1>
           <p className="text-xs text-[var(--tg-theme-hint-color)]">
             {profile?.username ? `@${profile.username}` : `ID: ${telegramId}`}
           </p>
@@ -73,12 +75,12 @@ export function Profile() {
 
       {/* Integrations */}
       <section className="space-y-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--tg-theme-hint-color)]">
+        <h2 className="font-hud text-xs font-semibold uppercase tracking-wider text-[var(--tg-theme-hint-color)]">
           Игровые привязки
         </h2>
 
         <IntegrationCard
-          icon={<SteamIcon className="w-6 h-6 fill-[#38bdf8]" />}
+          icon={<SteamIcon className="w-6 h-6" />}
           name="Steam"
           description={profile?.steamId ? `ID: ${profile.steamId}` : "Показывать игру и онлайн-статус"}
           connected={Boolean(profile?.steamId)}
@@ -92,21 +94,21 @@ export function Profile() {
           onClick={() => openEdit("faceit")}
         />
         <IntegrationCard
-          icon="🎧"
+          icon={<Headphones className="w-5 h-5 text-indigo-400" />}
           name="TeamSpeak"
           description={profile?.tsIdentity ? `Ник: ${profile.tsIdentity}` : "Статус в голосовом канале"}
           connected={Boolean(profile?.tsIdentity)}
           onClick={() => openEdit("ts")}
         />
         <IntegrationCard
-          icon="📅"
+          icon={<Calendar className="w-5 h-5 text-purple-400" />}
           name="Календарь (ICS)"
           description="Автоматический статус занятости"
           connected={profile?.calendarSources?.length > 0}
           readOnly
         />
         <IntegrationCard
-          icon="📍"
+          icon={<MapPin className="w-5 h-5 text-rose-400" />}
           name="Геолокация"
           description={profile?.hasHomeLocation ? "Точка дома сохранена" : "Отправь локацию боту"}
           connected={Boolean(profile?.hasHomeLocation)}
@@ -222,15 +224,18 @@ function IntegrationCard({
 function NotificationToggle({ label, defaultOn }: { label: string; defaultOn: boolean }) {
   const [checked, setChecked] = useState(defaultOn);
   return (
-    <label className="flex items-center justify-between cursor-pointer select-none">
+    <label className="flex items-center justify-between cursor-pointer select-none py-1">
       <span className="text-xs text-[var(--tg-theme-text-color)]">{label}</span>
       <input
         type="checkbox"
         checked={checked}
-        onChange={(e) => setChecked(e.target.checked)}
-        className="w-9 h-5 rounded-full appearance-none bg-white/20 checked:bg-[var(--tg-theme-button-color)] transition-colors relative
-          before:content-[''] before:absolute before:w-4 before:h-4 before:rounded-full before:bg-white before:top-0.5 before:left-0.5 before:transition-transform
-          checked:before:translate-x-4 cursor-pointer"
+        onChange={(e) => {
+          triggerHaptic("selection");
+          setChecked(e.target.checked);
+        }}
+        className="w-10 h-6 rounded-full appearance-none bg-white/20 checked:bg-[#00f076] transition-colors relative
+          before:content-[''] before:absolute before:w-5 before:h-5 before:rounded-full before:bg-white before:top-0.5 before:left-0.5 before:transition-transform
+          checked:before:translate-x-4 cursor-pointer shadow-inner"
       />
     </label>
   );

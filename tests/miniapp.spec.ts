@@ -64,7 +64,7 @@ test.describe("Telegram Mini App UI", () => {
 
     // Navigate to Group tab
     await page.getByRole("link", { name: /Группа/i }).click();
-    await expect(page.getByRole("heading", { name: "👥 Группы" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Группы", exact: true })).toBeVisible();
     await expect(page.locator("text=CS Пацаны")).toBeVisible();
     await expect(page.getByRole("button", { name: /Инвайт/i })).toBeVisible();
 
