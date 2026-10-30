@@ -26,32 +26,26 @@ test.describe("Telegram Mini App UI", () => {
   test("User can switch status in Mini App", async ({ page }) => {
     await page.goto("/?userId=619219842");
 
-    // Click "ПОПОЗЖЕ"
-    const maybeBtn = page.getByRole("button", { name: /ПОПОЗЖЕ/i });
+    // Click "Возможно"
+    const maybeBtn = page.getByRole("button", { name: "Возможно", exact: true });
     await expect(maybeBtn).toBeVisible();
     await maybeBtn.click();
 
-    // Should not show time picker
-    await expect(page.locator("text=/.*сможешь играть.*/i")).not.toBeVisible();
+    // Time picker carousel should NOT be visible when status is "Возможно"
+    await expect(page.locator("text=Время старта:")).not.toBeVisible();
 
-    // Click "ГОТОВ"
-    const readyBtn = page.getByRole("button", { name: /ГОТОВ/i });
+    // Click "Готов"
+    const readyBtn = page.getByRole("button", { name: "Готов", exact: true });
     await readyBtn.click();
 
-    // Open time picker via centered pill
-    await page.getByRole("button", { name: /С \d\d:\d\d|Выбрать время/i }).click();
+    // Time carousel should now appear
+    await expect(page.locator("text=Время старта:")).toBeVisible();
 
-    // Time picker should appear
-    await expect(page.locator("text=/.*сможешь играть.*/i")).toBeVisible();
+    // Click "19:00" in carousel
+    await page.getByRole("button", { name: "19:00", exact: true }).click();
 
-    // Click "19:00"
-    await page.getByRole("button", { name: "19:00" }).click();
-
-    // Time picker closes and label shows time
+    // Status summary reflects 19:00
     await expect(page.locator("text=/.*19:00.*/").first()).toBeVisible();
-
-    // Click ГОТОВ to keep glowing active state
-    await page.getByRole("button", { name: /ГОТОВ/i }).click();
 
     // Save updated screenshot
     await page.screenshot({

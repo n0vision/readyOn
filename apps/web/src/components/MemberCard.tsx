@@ -11,115 +11,105 @@ export function MemberCard({ member, isSelf }: Props) {
   const status = (member.dailyStatus?.status || "UNSET") as ReadyStatusType;
   const os = member.onlineStatus;
 
-  // Avatar glow border
-  const getAvatarGlow = () => {
+  // Status dot color for the Discord-style avatar badge
+  const getStatusDotColor = () => {
     switch (status) {
       case "READY":
-        return "border-2 border-[#00f076] glow-ready";
+        return "bg-[#23A55A]";
       case "UNLIKELY":
-        return "border-2 border-[#f59e0b] glow-maybe";
+        return "bg-[#F0B232]";
+      case "UNAVAILABLE":
+        return "bg-[#F23F43]";
       default:
-        return "border border-white/15 glow-offline opacity-70";
+        return "bg-[#80848E]";
     }
   };
 
-  // Subtitle text styling in Russian
+  // Subtitle text: when UNLIKELY ("Возможно"), strictly no time is shown
   const renderSubtitle = () => {
     switch (status) {
       case "READY":
         return (
-          <span className="text-white/80 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00f076] shadow-[0_0_6px_#00f076]"></span>
-            <span>
-              {member.dailyStatus?.availableFrom
-                ? `Готов с ${member.dailyStatus.availableFrom}`
-                : "Готов прямо сейчас"}
-            </span>
+          <span className="text-[#DBDEE1]/80 font-medium">
+            {member.dailyStatus?.availableFrom
+              ? `Готов с ${member.dailyStatus.availableFrom}`
+              : "Готов прямо сейчас"}
           </span>
         );
       case "UNLIKELY":
-        return (
-          <span className="text-[#f59e0b] flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></span>
-            <span>
-              {member.dailyStatus?.availableFrom
-                ? `Будет позже (с ${member.dailyStatus.availableFrom})`
-                : "Попозже"}
-            </span>
-          </span>
-        );
+        return <span className="text-[#F0B232] font-medium">Возможно</span>;
       case "UNAVAILABLE":
-        return (
-          <span className="text-[#ef4444] flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]"></span>
-            <span>Не сегодня</span>
-          </span>
-        );
+        return <span className="text-[#949BA4] font-medium">Не смогу</span>;
       default:
-        return <span className="text-[#64748b]">Не в сети</span>;
+        return <span className="text-[#949BA4]">Не в сети</span>;
     }
   };
 
   return (
-    <div className="hud-card rounded-2xl p-4 flex items-center gap-3.5 transition-all duration-200 hover:border-white/20">
-      {/* Avatar with radiant glowing ring */}
-      <div className="relative flex-shrink-0">
-        <div
-          className={`w-12 h-12 rounded-full bg-[#1e2535] flex items-center justify-center text-base font-bold text-white transition-all duration-300 ${getAvatarGlow()}`}
-        >
+    <div
+      className={`bg-[#2B2D31] rounded-2xl p-3 flex items-center gap-3.5 transition-all duration-200 ${
+        isSelf ? "border border-[#3F5F96]/40" : "border border-white/5"
+      } ${status === "UNSET" || status === "UNAVAILABLE" ? "opacity-75" : ""}`}
+    >
+      {/* Discord-style Avatar with corner status indicator dot */}
+      <div className="relative shrink-0">
+        <div className="w-11 h-11 rounded-full bg-[#323336] flex items-center justify-center font-bold text-sm text-white border border-white/10 overflow-hidden">
           {member.avatarUrl ? (
             <img
               src={member.avatarUrl}
-              className="w-full h-full rounded-full object-cover"
+              className="w-full h-full object-cover"
               alt=""
             />
           ) : (
             member.displayName[0]
           )}
         </div>
+        <span
+          className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full ${getStatusDotColor()} border-2 border-[#2B2D31]`}
+        ></span>
       </div>
 
       {/* Info & Badges */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="font-bold text-sm text-white truncate">
             {member.displayName}
           </span>
           {isSelf && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white/70 border border-white/10 tracking-wider">
-              ВЫ
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-white/70 font-semibold tracking-wider">
+              Вы
             </span>
           )}
         </div>
 
-        <div className="text-xs font-medium mt-0.5">{renderSubtitle()}</div>
+        <div className="text-xs mt-0.5">{renderSubtitle()}</div>
 
         {/* Gaming Chips */}
         {os && (
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            {/* Steam badge with monochrome Steam icon */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+            {/* Steam badge with brand color */}
             {os.steamStatus === "in_game" || os.steamGame ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0284c7]/20 border border-[#0284c7]/40 text-[#38bdf8] text-[11px] font-semibold">
-                <SteamIcon className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-semibold text-[#8BA4CC]">
+                <SteamIcon className="w-3 h-3" />
                 <span>{os.steamGame || "В CS2"}</span>
               </span>
             ) : os.steamStatus === "online" ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0284c7]/15 border border-[#0284c7]/30 text-[#38bdf8]/90 text-[11px] font-medium">
-                <SteamIcon className="w-3.5 h-3.5" />
-                <span>Steam онлайн</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-medium text-[#8BA4CC]/80">
+                <SteamIcon className="w-3 h-3" />
+                <span>В сети</span>
               </span>
             ) : null}
 
-            {/* FACEIT badge with official polygon vector */}
+            {/* FACEIT badge with brand orange chevron */}
             {os.faceitStatus === "in_match" ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ea580c]/25 border border-[#ea580c]/40 text-[#fb923c] text-[11px] font-bold">
-                <FaceitIcon className="w-3.5 h-3.5 fill-current" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-bold text-[#FF5500]">
+                <FaceitIcon className="w-2.5 h-2.5" />
                 <span>В матче FACEIT</span>
               </span>
             ) : os.faceitElo ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ea580c]/20 border border-[#ea580c]/40 text-[#fb923c] text-[11px] font-semibold">
-                <FaceitIcon className="w-3.5 h-3.5 fill-current" />
-                <span className="font-hud tracking-wide">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#1E1F22] border border-white/5 text-[11px] font-bold text-[#FF5500]">
+                <FaceitIcon className="w-2.5 h-2.5" />
+                <span className="text-white/90 font-medium">
                   Lvl {os.faceitLevel || 3} · {os.faceitElo} ELO
                 </span>
               </span>
@@ -127,9 +117,9 @@ export function MemberCard({ member, isSelf }: Props) {
 
             {/* ETA chip */}
             {os.locationStatus === "transit" && os.etaMinutes && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-medium">
-                <Car className="w-3.5 h-3.5" />
-                <span>~{os.etaMinutes} мин до дома</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-medium">
+                <Car className="w-3 h-3" />
+                <span>~{os.etaMinutes} мин</span>
               </span>
             )}
           </div>

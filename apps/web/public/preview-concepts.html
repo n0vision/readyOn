@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>readyOn — 3 Design Projects Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #0e1015; margin: 0; padding: 24px; color: #fff; }
+    .font-hud { font-family: 'Chakra Petch', sans-serif; }
+    .concept-card { width: 390px; height: 844px; overflow-y: auto; overflow-x: hidden; border-radius: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); position: relative; border: 8px solid #202228; flex-shrink: 0; }
+  </style>
+</head>
+<body class="flex flex-col items-center">
+  <div class="text-center max-w-2xl mb-8">
+    <h1 class="text-2xl font-black tracking-tight text-white mb-2">readyOn — Дизайн-проекты (Discord / Steam / Telegram)</h1>
+    <p class="text-sm text-white/60">Сдержанные палитры без неонового свечения и градиентов. Акцент: <span class="text-[#8ba4cc] font-mono font-bold">#3F5F96</span>, база: <span class="text-[#a0a2a6] font-mono font-bold">#323336</span>.</p>
+  </div>
+
+  <div class="flex flex-wrap gap-8 justify-center items-start">
+
+    <!-- CONCEPT 1: DISCORD SLATE -->
+    <div id="concept-discord" class="flex flex-col items-center">
+      <div class="mb-3 text-center">
+        <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#3F5F96]/30 text-[#8ba4cc] border border-[#3F5F96]/40">Концепт 1</span>
+        <h2 class="text-lg font-bold text-white mt-1">Discord Slate (Матовый графит)</h2>
+        <p class="text-xs text-white/50">Мягкие плоские карточки #2B2D31, аккуратные пилюли, 0% глоу</p>
+      </div>
+
+      <div class="concept-card bg-[#1E1F22] p-4 flex flex-col justify-between select-none">
+        <!-- Top App Bar -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between pt-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-[#2B2D31] border border-white/5 flex items-center justify-center text-[#8ba4cc]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></svg>
+              </div>
+              <div>
+                <div class="text-base font-extrabold tracking-tight text-white flex items-center">
+                  <span>ready</span><span class="text-[#8ba4cc]">On</span>
+                </div>
+                <div class="text-[10px] uppercase font-semibold tracking-wider text-white/40">CS2 Сквад</div>
+              </div>
+            </div>
+
+            <div class="w-9 h-9 rounded-xl bg-[#2B2D31] border border-white/5 flex items-center justify-center text-white/60">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+            </div>
+          </div>
+
+          <!-- Group & Ready Counter -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="bg-[#2B2D31] border border-white/5 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-white/90">
+              <svg class="w-3.5 h-3.5 text-[#8ba4cc]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span>CS Пацаны</span>
+              <span class="text-white/40 text-[10px]">▼</span>
+            </div>
+            <div class="bg-[#3F5F96]/20 border border-[#3F5F96]/30 text-[#8ba4cc] text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-[#23A55A]"></span>
+              <span>1/5 готовы</span>
+            </div>
+          </div>
+
+          <!-- Status Selector: Discord Segmented Control Style -->
+          <div class="bg-[#2B2D31] border border-white/5 rounded-2xl p-3 space-y-3">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-white/40">Твой статус на вечер</div>
+            <div class="grid grid-cols-3 gap-2">
+              <button class="h-14 rounded-xl bg-[#3F5F96] text-white flex flex-col items-center justify-center font-bold text-xs shadow-sm transition-all">
+                <span class="text-sm font-extrabold tracking-wide">ГОТОВ</span>
+                <span class="text-[10px] text-white/80 font-medium flex items-center gap-1 mt-0.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#23A55A]"></span> Играю
+                </span>
+              </button>
+
+              <button class="h-14 rounded-xl bg-[#1E1F22] border border-white/5 hover:border-white/10 text-white/70 flex flex-col items-center justify-center text-xs">
+                <span class="text-sm font-semibold text-white/90">ПОПОЗЖЕ</span>
+                <span class="text-[10px] text-amber-400 font-medium flex items-center gap-1 mt-0.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> С 20:00
+                </span>
+              </button>
+
+              <button class="h-14 rounded-xl bg-[#1E1F22] border border-white/5 hover:border-white/10 text-white/50 flex flex-col items-center justify-center text-xs">
+                <span class="text-xs font-medium text-white/70">НЕ СМОГУ</span>
+                <span class="text-[10px] text-rose-400 font-medium flex items-center gap-1 mt-0.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Оффлайн
+                </span>
+              </button>
+            </div>
+
+            <!-- Time Selection Pill -->
+            <div class="flex items-center justify-between pt-1 text-xs">
+              <span class="text-white/40">Время старта:</span>
+              <button class="bg-[#1E1F22] hover:bg-[#323336] border border-white/5 px-3 py-1.5 rounded-lg text-white/80 font-medium flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-[#8ba4cc]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>С 19:00</span>
+                <span class="text-[10px] text-white/30">▼</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Squad Roster List -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-[11px] font-bold text-white/40 uppercase tracking-wider px-1">
+              <span>Состав команды</span>
+              <span>4 игрока</span>
+            </div>
+
+            <!-- Member 1: Self -->
+            <div class="bg-[#2B2D31] border border-[#3F5F96]/30 rounded-xl p-3 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-[#323336] flex items-center justify-center font-bold text-sm text-white relative">
+                <span>Н</span>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#23A55A] border-2 border-[#2B2D31]"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold text-sm text-white truncate">Никита Владимиров</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#3F5F96]/20 text-[#8ba4cc] font-bold">ВЫ</span>
+                </div>
+                <div class="text-xs text-white/70 mt-0.5">Готов с 19:00</div>
+                <div class="flex items-center gap-2 mt-1.5">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1E1F22] border border-white/5 text-[11px] text-sky-300 font-medium">
+                    <img src="steam.png" class="w-3 h-3 rounded-full" /> В CS2
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1E1F22] border border-white/5 text-[11px] text-orange-300 font-medium">
+                    <svg class="w-3 h-3 fill-orange-400" viewBox="0 0 782 619"><path d="M0 310h572L782 0v619Z"/></svg> Lvl 8 · 1683 ELO
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Member 2 -->
+            <div class="bg-[#2B2D31] border border-white/5 rounded-xl p-3 flex items-center gap-3 opacity-90">
+              <div class="w-10 h-10 rounded-full bg-[#323336] flex items-center justify-center font-bold text-sm text-white relative">
+                <span>I</span>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-[#2B2D31]"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold text-sm text-white">Ivan</div>
+                <div class="text-xs text-white/50">Попозже (с 21:00)</div>
+              </div>
+            </div>
+
+            <!-- Member 3 -->
+            <div class="bg-[#2B2D31] border border-white/5 rounded-xl p-3 flex items-center gap-3 opacity-90">
+              <div class="w-10 h-10 rounded-full bg-[#323336] flex items-center justify-center font-bold text-sm text-white relative">
+                <span>Р</span>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-[#2B2D31]"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold text-sm text-white">Равиль</div>
+                <div class="text-xs text-white/50">Попозже</div>
+              </div>
+            </div>
+
+            <!-- Member 4 -->
+            <div class="bg-[#2B2D31] border border-white/5 rounded-xl p-3 flex items-center gap-3 opacity-60">
+              <div class="w-10 h-10 rounded-full bg-[#323336] flex items-center justify-center font-bold text-sm text-white relative">
+                <span>А</span>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white/20 border-2 border-[#2B2D31]"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold text-sm text-white">Александр Павлючук</div>
+                <div class="text-xs text-white/40">Не в сети</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Bottom Banner + Nav -->
+        <div class="space-y-3 pt-3">
+          <!-- Banner -->
+          <div class="bg-[#2B2D31] border border-white/10 rounded-xl p-2.5 px-3.5 flex items-center justify-between shadow-lg">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c.5 3-1.5 5-2 6.5C9.5 10 10 11.5 11 12c-2.5 0-4-2-4-4 0 0-3 3.5-3 7a8 8 0 0 0 16 0c0-4-3-6-5-7.5-.5-1.5-1-3.5 0-5.5-2 1-3 3-3 3z"/></svg>
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Ещё 4 до фулл-стака</span>
+            </div>
+            <button class="h-8 px-4 rounded-lg bg-[#3F5F96] hover:bg-[#4D72B0] text-white text-xs font-bold uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Инвайт</span>
+            </button>
+          </div>
+
+          <!-- Bottom Navigation -->
+          <div class="border-t border-white/5 pt-2 flex justify-around text-xs font-semibold text-white/40">
+            <div class="text-[#8ba4cc] flex flex-col items-center gap-1">
+              <svg class="w-5 h-5 text-[#8ba4cc]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></svg>
+              <span>Сквад</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 hover:text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <span>Группа</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 hover:text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Профиль</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- CONCEPT 2: STEAM GUNMETAL -->
+    <div id="concept-steam" class="flex flex-col items-center">
+      <div class="mb-3 text-center">
+        <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#212b3b] text-[#57cbde] border border-[#2e3a4b]">Концепт 2</span>
+        <h2 class="text-lg font-bold text-white mt-1">Steam Gunmetal (Оружейный стальной)</h2>
+        <p class="text-xs text-white/50">Глубокий сине-серый фон #171A21, карточки #212B3B, сталь #3F5F96</p>
+      </div>
+
+      <div class="concept-card bg-[#171A21] p-4 flex flex-col justify-between select-none">
+        <!-- Top App Bar -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between pt-2">
+            <div class="flex items-center gap-2.5">
+              <img src="steam.png" class="w-9 h-9 rounded-full shadow-md" />
+              <div>
+                <div class="text-base font-black tracking-tight text-white flex items-center font-hud">
+                  <span>ready</span><span class="text-[#57cbde]">On</span>
+                </div>
+                <div class="text-[9px] uppercase font-bold tracking-widest text-[#57cbde]/70 font-hud">SQUAD HUB</div>
+              </div>
+            </div>
+
+            <div class="w-8 h-8 rounded-lg bg-[#212B3B] border border-[#2e3a4b] flex items-center justify-center text-white/60">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+            </div>
+          </div>
+
+          <!-- Group & Ready Counter: Steam Style -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="bg-[#212B3B] border border-[#2e3a4b] rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs font-bold text-white font-hud tracking-wide">
+              <span class="text-[#57cbde]">CS Пацаны</span>
+              <span class="text-white/40 text-[10px]">▼</span>
+            </div>
+            <!-- Steam segment counter: 5 segments -->
+            <div class="bg-[#212B3B] border border-[#2e3a4b] px-3 py-1.5 rounded-lg flex items-center gap-2">
+              <div class="flex gap-1">
+                <span class="w-3 h-2 rounded-xs bg-[#57cbde]"></span>
+                <span class="w-3 h-2 rounded-xs bg-[#323336]"></span>
+                <span class="w-3 h-2 rounded-xs bg-[#323336]"></span>
+                <span class="w-3 h-2 rounded-xs bg-[#323336]"></span>
+                <span class="w-3 h-2 rounded-xs bg-[#323336]"></span>
+              </div>
+              <span class="text-xs font-bold text-[#57cbde] font-hud">1/5 READY</span>
+            </div>
+          </div>
+
+          <!-- Status Selector: Steam Action Tiles -->
+          <div class="bg-[#212B3B] border border-[#2e3a4b] rounded-xl p-3 space-y-3">
+            <div class="grid grid-cols-3 gap-2">
+              <button class="h-14 rounded-lg bg-[#3F5F96] text-white flex flex-col items-center justify-center font-bold text-xs border border-[#57cbde]/30 shadow-inner">
+                <span class="text-sm font-black font-hud tracking-wide text-white">READY</span>
+                <span class="text-[10px] text-[#57cbde] font-bold mt-0.5">В СЕТИ</span>
+              </button>
+
+              <button class="h-14 rounded-lg bg-[#171A21] border border-[#2e3a4b] text-white/70 flex flex-col items-center justify-center text-xs">
+                <span class="text-sm font-bold font-hud text-amber-400">MAYBE</span>
+                <span class="text-[10px] text-white/40 font-medium mt-0.5">С 20:00</span>
+              </button>
+
+              <button class="h-14 rounded-lg bg-[#171A21] border border-[#2e3a4b] text-white/40 flex flex-col items-center justify-center text-xs">
+                <span class="text-xs font-bold font-hud text-white/50">BUSY</span>
+                <span class="text-[10px] text-white/30 font-medium mt-0.5">ОФФЛАЙН</span>
+              </button>
+            </div>
+
+            <!-- Time Selection -->
+            <div class="flex items-center justify-between text-xs pt-1 border-t border-[#2e3a4b]/50">
+              <span class="text-white/40 font-hud">START TIME:</span>
+              <button class="bg-[#171A21] border border-[#2e3a4b] px-3 py-1 rounded-md text-white/80 font-bold font-hud flex items-center gap-1.5">
+                <span class="text-[#57cbde]">19:00</span>
+                <span class="text-white/40 text-[9px]">▼</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Squad Roster List: Steam Friends Layout -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-[10px] font-bold text-white/40 uppercase tracking-widest font-hud px-1">
+              <span>FRIENDS IN SQUAD</span>
+              <span>4 / 5</span>
+            </div>
+
+            <!-- Member 1: Self -->
+            <div class="bg-[#212B3B] border-l-4 border-l-[#57cbde] border-y border-r border-[#2e3a4b] rounded-r-lg p-2.5 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-md bg-[#171A21] border border-[#57cbde]/50 flex items-center justify-center font-bold text-white font-hud">
+                Н
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold text-sm text-white truncate">Никита Владимиров</span>
+                  <span class="text-[9px] px-1 rounded bg-[#3F5F96] text-white font-bold font-hud">YOU</span>
+                </div>
+                <div class="text-xs text-[#57cbde] font-medium">Ready now (19:00)</div>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-[10px] text-sky-400 font-hud font-bold">STEAM IN-GAME</span>
+                  <span class="text-white/30">·</span>
+                  <span class="text-[10px] text-orange-400 font-hud font-bold">FACEIT LVL 8</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Member 2 -->
+            <div class="bg-[#212B3B] border-l-4 border-l-amber-500/50 border-y border-r border-[#2e3a4b] rounded-r-lg p-2.5 flex items-center gap-3 opacity-90">
+              <div class="w-10 h-10 rounded-md bg-[#171A21] border border-amber-500/30 flex items-center justify-center font-bold text-white font-hud">
+                I
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-sm text-white">Ivan</div>
+                <div class="text-xs text-amber-400/90 font-medium">Maybe (after 21:00)</div>
+              </div>
+            </div>
+
+            <!-- Member 3 -->
+            <div class="bg-[#212B3B] border-l-4 border-l-amber-500/50 border-y border-r border-[#2e3a4b] rounded-r-lg p-2.5 flex items-center gap-3 opacity-90">
+              <div class="w-10 h-10 rounded-md bg-[#171A21] border border-amber-500/30 flex items-center justify-center font-bold text-white font-hud">
+                Р
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-sm text-white">Равиль</div>
+                <div class="text-xs text-amber-400/90 font-medium">Maybe</div>
+              </div>
+            </div>
+
+            <!-- Member 4 -->
+            <div class="bg-[#212B3B] border-l-4 border-l-white/10 border-y border-r border-[#2e3a4b] rounded-r-lg p-2.5 flex items-center gap-3 opacity-60">
+              <div class="w-10 h-10 rounded-md bg-[#171A21] border border-white/10 flex items-center justify-center font-bold text-white/50 font-hud">
+                А
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-sm text-white/70">Александр Павлючук</div>
+                <div class="text-xs text-white/40 font-medium">Offline</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Bottom Banner + Nav: Steam Style -->
+        <div class="space-y-3 pt-3">
+          <!-- Banner -->
+          <div class="bg-[#212B3B] border border-[#2e3a4b] rounded-lg p-2.5 px-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#57cbde]"></span>
+              <span class="text-xs font-bold text-white uppercase font-hud tracking-wide">4 MORE FOR 5-STACK</span>
+            </div>
+            <button class="h-8 px-4 rounded bg-[#3F5F96] hover:bg-[#4D72B0] text-white text-xs font-black uppercase font-hud tracking-wider flex items-center gap-1.5">
+              <span>INVITE</span>
+            </button>
+          </div>
+
+          <!-- Bottom Navigation: Steam Deck Tab Bar -->
+          <div class="border-t border-[#2e3a4b] pt-2 flex justify-around text-xs font-bold font-hud text-white/40">
+            <div class="text-[#57cbde] flex flex-col items-center gap-1">
+              <svg class="w-5 h-5 text-[#57cbde]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></svg>
+              <span>SQUAD</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 hover:text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <span>GROUP</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 hover:text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>PROFILE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- CONCEPT 3: TELEGRAM NATIVE MINIMAL -->
+    <div id="concept-telegram" class="flex flex-col items-center">
+      <div class="mb-3 text-center">
+        <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#242F3D] text-[#8ba4cc] border border-[#323336]">Концепт 3</span>
+        <h2 class="text-lg font-bold text-white mt-1">Telegram Native (Чистый нативный)</h2>
+        <p class="text-xs text-white/50">Фон #1C242D, списки #242F3D, сдержанные акценты #3F5F96</p>
+      </div>
+
+      <div class="concept-card bg-[#1C242D] p-4 flex flex-col justify-between select-none">
+        <!-- Top App Bar -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between pt-2">
+            <div>
+              <h1 class="text-xl font-bold tracking-tight text-white">readyOn</h1>
+              <p class="text-xs text-[#8ba4cc]">Сбор сквада в CS2</p>
+            </div>
+
+            <!-- Group Switcher Pill -->
+            <div class="bg-[#242F3D] border border-white/5 rounded-full px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-white">
+              <span>CS Пацаны</span>
+              <span class="text-white/40 text-[10px]">▼</span>
+            </div>
+          </div>
+
+          <!-- Status Bar: Clean Telegram-style Segments -->
+          <div class="bg-[#242F3D] rounded-2xl p-3 space-y-3 border border-white/5">
+            <div class="flex items-center justify-between text-xs text-white/50">
+              <span>Твой статус:</span>
+              <span class="text-[#8ba4cc] font-medium">Готов с 19:00</span>
+            </div>
+
+            <!-- Segmented Control with #3F5F96 -->
+            <div class="bg-[#1C242D] p-1 rounded-xl flex items-center gap-1">
+              <button class="flex-1 py-2.5 rounded-lg bg-[#3F5F96] text-white font-bold text-xs shadow-sm">
+                Готов
+              </button>
+              <button class="flex-1 py-2.5 rounded-lg text-white/60 font-medium text-xs hover:text-white">
+                Попозже
+              </button>
+              <button class="flex-1 py-2.5 rounded-lg text-white/40 font-medium text-xs hover:text-white">
+                Не смогу
+              </button>
+            </div>
+
+            <!-- Quick Time Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pt-1">
+              <span class="text-[11px] text-white/40 mr-1 shrink-0">Время:</span>
+              <button class="px-2.5 py-1 rounded-full bg-[#3F5F96]/30 text-[#8ba4cc] font-bold text-xs border border-[#3F5F96]/40 shrink-0">19:00</button>
+              <button class="px-2.5 py-1 rounded-full bg-[#1C242D] text-white/60 text-xs shrink-0">19:30</button>
+              <button class="px-2.5 py-1 rounded-full bg-[#1C242D] text-white/60 text-xs shrink-0">20:00</button>
+              <button class="px-2.5 py-1 rounded-full bg-[#1C242D] text-white/60 text-xs shrink-0">21:00</button>
+            </div>
+          </div>
+
+          <!-- Grouped Member List (Telegram Inset Grouped Style) -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-xs font-medium text-white/40 px-2 py-1">
+              <span>УЧАСТНИКИ СКВАДА</span>
+              <span class="text-[#8ba4cc]">1 готов из 5</span>
+            </div>
+
+            <div class="bg-[#242F3D] rounded-2xl overflow-hidden divide-y divide-white/5 border border-white/5">
+              <!-- Member 1: Self -->
+              <div class="p-3 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-[#3F5F96] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                  НВ
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-sm text-white truncate">Никита Владимиров (Вы)</span>
+                    <span class="text-xs text-emerald-400 font-medium">Готов</span>
+                  </div>
+                  <div class="text-xs text-white/50 flex items-center gap-2 mt-0.5">
+                    <span>С 19:00</span>
+                    <span>·</span>
+                    <span class="text-sky-300">Steam</span>
+                    <span>·</span>
+                    <span class="text-orange-300">1683 ELO</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Member 2 -->
+              <div class="p-3 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-[#323336] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                  IV
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-sm text-white">Ivan</span>
+                    <span class="text-xs text-amber-400 font-medium">Попозже</span>
+                  </div>
+                  <div class="text-xs text-white/40 mt-0.5">После 21:00</div>
+                </div>
+              </div>
+
+              <!-- Member 3 -->
+              <div class="p-3 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-[#323336] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                  РА
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-sm text-white">Равиль</span>
+                    <span class="text-xs text-amber-400 font-medium">Попозже</span>
+                  </div>
+                  <div class="text-xs text-white/40 mt-0.5">Не указал время</div>
+                </div>
+              </div>
+
+              <!-- Member 4 -->
+              <div class="p-3 flex items-center gap-3 opacity-60">
+                <div class="w-10 h-10 rounded-full bg-[#323336] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                  АП
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-sm text-white">Александр Павлючук</span>
+                    <span class="text-xs text-white/40">Не в сети</span>
+                  </div>
+                  <div class="text-xs text-white/40 mt-0.5">Оффлайн</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Bottom Banner + Nav: Telegram Native Style -->
+        <div class="space-y-3 pt-3">
+          <!-- Action Banner -->
+          <div class="bg-[#242F3D] border border-white/5 rounded-2xl p-3 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-white">Нужно ещё 4 игрока</div>
+              <div class="text-[11px] text-white/40">Для полного сбора команды</div>
+            </div>
+            <button class="h-9 px-4 rounded-xl bg-[#3F5F96] hover:bg-[#4D72B0] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+              <span>Пригласить</span>
+            </button>
+          </div>
+
+          <!-- Bottom Navigation: Telegram Native Tabs -->
+          <div class="border-t border-white/5 pt-2 flex justify-around text-xs font-medium text-white/40">
+            <div class="text-[#8ba4cc] flex flex-col items-center gap-1">
+              <svg class="w-5 h-5 text-[#8ba4cc]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></svg>
+              <span>Сквад</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 hover:text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <span>Группы</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 hover:text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Профиль</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
