@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { getCurrentTelegramId, fetchUserGroups, createGroup, joinGroup } from "../services/api.js";
+import {
+  getCurrentTelegramId,
+  fetchUserGroups,
+  createGroup,
+  joinGroup,
+  updateGroupSettings,
+} from "../services/api.js";
 
 export function Groups() {
   const telegramId = getCurrentTelegramId();
@@ -56,6 +62,35 @@ export function Groups() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const shareInvite = (code: string, name: string) => {
+    const inviteUrl = `https://t.me/readyOnCS_bot?start=group_${code}`;
+    const text = `Го в CS2! Заходи в группу «${name}» в readyOn:`;
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(text)}`;
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(shareUrl);
+    } else {
+      window.open(shareUrl, "_blank");
+    }
+  };
+
+  const handleUpdateTargetSize = async (groupId: number, targetSize: number) => {
+    try {
+      await updateGroupSettings(groupId, { targetSize });
+      await loadGroups();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUpdateReminderHour = async (groupId: number, reminderHour: number) => {
+    try {
+      await updateGroupSettings(groupId, { reminderHour });
+      await loadGroups();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="p-4 space-y-5 max-w-lg mx-auto">
       <h1 className="text-xl font-bold tracking-tight">👥 Группы</h1>
@@ -75,28 +110,83 @@ export function Groups() {
             {groups.map((g) => (
               <div
                 key={g.id}
-                className="p-3.5 rounded-xl bg-[var(--tg-theme-secondary-bg-color)] flex items-center justify-between border border-white/5"
+                className="p-3.5 rounded-xl bg-[var(--tg-theme-secondary-bg-color)] space-y-3 border border-white/5"
               >
-                <div>
-                  <div className="font-semibold text-sm flex items-center gap-1.5">
-                    <span>{g.name}</span>
-                    {g.role === "OWNER" && (
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-medium">
-                        Владелец
-                      </span>
-                    )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-sm flex items-center gap-1.5">
+                      <span>{g.name}</span>
+                      {g.role === "OWNER" && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-medium">
+                          Владелец
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[var(--tg-theme-hint-color)] mt-0.5">
+                      👥 {g.memberCount} участников
+                    </div>
                   </div>
-                  <div className="text-xs text-[var(--tg-theme-hint-color)] mt-0.5">
-                    👥 {g.memberCount} участников
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => shareInvite(g.inviteCode, g.name)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg bg-[var(--tg-theme-button-color)] text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-1"
+                    >
+                      <span>↗️</span>
+                      <span>Инвайт</span>
+                    </button>
+                    <button
+                      onClick={() => copyInvite(g.id, g.inviteCode)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                      title="Скопировать ссылку"
+                    >
+                      {copiedId === g.id ? "✓" : "📋"}
+                    </button>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => copyInvite(g.id, g.inviteCode)}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--tg-theme-button-color)] text-white hover:opacity-90 transition-opacity"
-                >
-                  {copiedId === g.id ? "✓ Скопировано" : "Инвайт"}
-                </button>
+                {/* Group settings */}
+                <div className="pt-2 border-t border-white/5 space-y-2 text-xs">
+                  {/* Target squad size */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[var(--tg-theme-hint-color)]">🎯 Порог команды:</span>
+                    <div className="flex items-center gap-1">
+                      {[3, 4, 5].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => handleUpdateTargetSize(g.id, size)}
+                          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                            (g.targetSize || 5) === size
+                              ? "bg-amber-500 text-black font-bold"
+                              : "bg-white/5 hover:bg-white/10 text-white/70"
+                          }`}
+                        >
+                          {size} чел
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Reminder hour */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[var(--tg-theme-hint-color)]">⏰ Вечерний опрос:</span>
+                    <div className="flex items-center gap-1">
+                      {[16, 17, 18, 19].map((hour) => (
+                        <button
+                          key={hour}
+                          onClick={() => handleUpdateReminderHour(g.id, hour)}
+                          className={`px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                            (g.reminderHour || 17) === hour
+                              ? "bg-blue-500 text-white font-bold"
+                              : "bg-white/5 hover:bg-white/10 text-white/70"
+                          }`}
+                        >
+                          {hour}:00
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

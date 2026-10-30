@@ -62,6 +62,11 @@ export function formatGroupText(group: any): string {
       } else if (os.steamStatus === "online") {
         indicators.push("🎮 Steam онлайн");
       }
+      if (os.faceitStatus === "in_match") {
+        indicators.push(`🟠 FACEIT: В матче (lvl ${os.faceitLevel || "?"})`);
+      } else if (os.faceitElo) {
+        indicators.push(`🟠 FACEIT: lvl ${os.faceitLevel || "?"} (${os.faceitElo} ELO)`);
+      }
       if (os.tsStatus === "connected") {
         indicators.push(`🎧 TS: ${os.tsChannel || "подключён"}`);
       }

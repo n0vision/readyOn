@@ -10,6 +10,7 @@ declare global {
         ready: () => void;
         expand: () => void;
         close: () => void;
+        openTelegramLink?: (url: string) => void;
         initDataUnsafe?: {
           user?: {
             id: number;
@@ -134,5 +135,18 @@ export async function updateUserIntegrations(
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to update integrations");
+  return res.json();
+}
+
+export async function updateGroupSettings(
+  groupId: number,
+  data: { targetSize?: number; reminderHour?: number }
+) {
+  const res = await fetch(`${API_BASE}/api/groups/${groupId}/settings`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update group settings");
   return res.json();
 }

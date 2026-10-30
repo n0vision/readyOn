@@ -83,9 +83,24 @@ export class GamingStatusPoller {
         }
 
         // Process FACEIT (if configured and linked)
-        if (user.faceitId && faceitService.isConfigured()) {
+        if (faceitService.isConfigured()) {
           try {
-            const faceitData = await faceitService.getPlayerByNickname(user.faceitId);
+            let faceitData = user.faceitId
+              ? await faceitService.getPlayerByNickname(user.faceitId)
+              : null;
+
+            // Auto-detect FACEIT by SteamID if nickname was not manually entered
+            if (!faceitData && user.steamId) {
+              faceitData = await faceitService.getPlayerBySteamId(user.steamId);
+              if (faceitData?.nickname && !user.faceitId) {
+                // Save resolved nickname to user
+                await prisma.user.update({
+                  where: { id: user.id },
+                  data: { faceitId: faceitData.nickname },
+                });
+              }
+            }
+
             if (faceitData) {
               faceitElo = faceitData.elo;
               faceitLevel = faceitData.level;

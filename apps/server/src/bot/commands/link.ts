@@ -1,6 +1,7 @@
 import type { BotContext } from "../index.js";
 import { prisma } from "../../db/prisma.js";
 import { steamService } from "../../services/gaming/steam.js";
+import { faceitService } from "../../services/gaming/faceit.js";
 import { gamingPoller } from "../../services/gaming/poller.js";
 
 export async function linkCommand(ctx: BotContext) {
@@ -77,18 +78,63 @@ export async function linkCommand(ctx: BotContext) {
     }
 
     case "faceit": {
-      const cleanNick = value.replace(/^@/, "");
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { faceitId: cleanNick },
-      });
+      const cleanNick = value.replace(/^@/, "").trim();
+      await ctx.reply(`🔍 Ищу профиль FACEIT для \`${cleanNick}\`...`, { parse_mode: "Markdown" });
 
-      gamingPoller.poll().catch(() => {});
+      if (faceitService.isConfigured()) {
+        const stats = await faceitService.getPlayerByNickname(cleanNick);
+        if (!stats) {
+          await ctx.reply(
+            `⚠️ Игрок с никнеймом \`${cleanNick}\` не найден на FACEIT.\n` +
+              `Проверь точное написание ника на faceit.com и попробуй снова.`,
+            { parse_mode: "Markdown" }
+          );
+          return;
+        }
 
-      await ctx.reply(
-        `✅ **FACEIT никнейм сохранён:** \`${cleanNick}\`\n\nБот будет отслеживать ELO и матчи!`,
-        { parse_mode: "Markdown" }
-      );
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { faceitId: stats.nickname },
+        });
+
+        await prisma.onlineStatus.upsert({
+          where: { userId: user.id },
+          update: {
+            faceitElo: stats.elo,
+            faceitLevel: stats.level,
+            faceitStatus: stats.status,
+            lastUpdated: new Date(),
+          },
+          create: {
+            userId: user.id,
+            faceitElo: stats.elo,
+            faceitLevel: stats.level,
+            faceitStatus: stats.status,
+          },
+        });
+
+        await ctx.reply(
+          `✅ **FACEIT успешно привязан!**\n\n` +
+            `• Игрок: **${stats.nickname}**\n` +
+            `• Уровень: **${stats.level || 1}** ⭐\n` +
+            `• ELO: **${stats.elo || "—"}**\n\n` +
+            `Бот будет автоматически отслеживать твои матчи и уровень!`,
+          { parse_mode: "Markdown" }
+        );
+      } else {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { faceitId: cleanNick },
+        });
+
+        gamingPoller.poll().catch(() => {});
+
+        await ctx.reply(
+          `✅ **FACEIT никнейм сохранён:** \`${cleanNick}\`\n\n` +
+            `_(Подсказка: укажи FACEIT_API_KEY в настройках сервера для подгрузки ELO и матчей)_`,
+          { parse_mode: "Markdown" }
+        );
+      }
       break;
     }
 

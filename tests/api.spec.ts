@@ -85,4 +85,13 @@ test.describe("Backend REST API", () => {
     expect(g1.targetSize).toBe(4);
     expect(g1.reminderHour).toBe(18);
   });
+
+  test("GET /api/status/:telegramId includes live FACEIT stats", async ({ request }) => {
+    const res = await request.get(`${API_BASE}/api/status/${TELEGRAM_ID}`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.onlineStatus).toBeDefined();
+    expect(body.onlineStatus.faceitElo).toBeGreaterThan(0);
+    expect(body.onlineStatus.faceitLevel).toBeGreaterThan(0);
+  });
 });

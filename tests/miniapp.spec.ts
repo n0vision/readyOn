@@ -16,6 +16,11 @@ test.describe("Telegram Mini App UI", () => {
 
     // Check ready counter badge
     await expect(page.locator("text=/.*готовы.*/")).toBeVisible();
+
+    // Save dashboard screenshot
+    await page.screenshot({
+      path: "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24/faceit-dashboard.png",
+    });
   });
 
   test("User can switch status in Mini App", async ({ page }) => {
@@ -51,6 +56,11 @@ test.describe("Telegram Mini App UI", () => {
     await expect(page.getByRole("heading", { name: "👥 Группы" })).toBeVisible();
     await expect(page.locator("text=CS Пацаны")).toBeVisible();
     await expect(page.getByRole("button", { name: /Инвайт/i })).toBeVisible();
+
+    // Save groups screenshot
+    await page.screenshot({
+      path: "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24/groups-dashboard.png",
+    });
 
     // Navigate to Profile tab
     await page.getByRole("link", { name: /Профиль/i }).click();

@@ -54,6 +54,19 @@ export function MemberCard({ member }: Props) {
                 🎮 Steam
               </span>
             )}
+            {os.faceitStatus === "in_match" && (
+              <span className="bg-orange-600/20 text-orange-400 px-2 py-0.5 rounded-full font-medium">
+                ⚔️ FACEIT: В матче
+              </span>
+            )}
+            {os.faceitElo && (
+              <span className="bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
+                <span className="w-3.5 h-3.5 rounded-full bg-orange-500 text-black text-[9px] flex items-center justify-center font-bold">
+                  {os.faceitLevel || "?"}
+                </span>
+                <span>{os.faceitElo} ELO</span>
+              </span>
+            )}
             {os.tsStatus === "connected" && (
               <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full">
                 🎧 {os.tsChannel || "TS"}
