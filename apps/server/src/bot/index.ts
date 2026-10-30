@@ -2,6 +2,7 @@ import { Bot, session, GrammyError, HttpError, InlineKeyboard } from "grammy";
 import type { Context, SessionFlavor } from "grammy";
 import { startCommand } from "./commands/start.js";
 import { menuCommand } from "./commands/menu.js";
+import { helpCommand } from "./commands/help.js";
 import { statusCommand } from "./commands/status.js";
 import { groupCommand, showGroupsWithInvites } from "./commands/group.js";
 import { linkCommand, unlinkCommand } from "./commands/link.js";
@@ -21,6 +22,7 @@ export type BotContext = Context & SessionFlavor<SessionData>;
 
 export const BOT_COMMANDS = [
   { command: "menu", description: "Главное меню с кнопками" },
+  { command: "help", description: "Полная инструкция и гид по readyOn" },
   { command: "status", description: "Кто сегодня готов играть" },
   { command: "poll", description: "Разослать опросник готовности пацанам" },
   { command: "group", description: "Твоя группа и ссылка-инвайт" },
@@ -55,6 +57,8 @@ export function createBot(): Bot<BotContext> | null {
   // Commands
   bot.command("start", startCommand);
   bot.command("menu", menuCommand);
+  bot.command("help", helpCommand);
+  bot.command("guide", helpCommand);
   bot.command("ready", (ctx) => statusCommand(ctx, "READY"));
   bot.command("busy", (ctx) => statusCommand(ctx, "UNAVAILABLE"));
   bot.command("maybe", (ctx) => statusCommand(ctx, "UNLIKELY"));
@@ -80,6 +84,11 @@ export function createBot(): Bot<BotContext> | null {
   bot.callbackQuery("nav:menu", async (ctx) => {
     await ctx.answerCallbackQuery();
     await menuCommand(ctx);
+  });
+
+  bot.callbackQuery("link:prompt", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await linkCommand(ctx);
   });
 
   bot.callbackQuery("groups:status_all", async (ctx) => {

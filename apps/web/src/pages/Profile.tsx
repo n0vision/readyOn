@@ -32,8 +32,11 @@ import {
   Link2,
   Clock,
   CheckCircle2,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics.js";
+import { OnboardingTour } from "../components/OnboardingTour.js";
 
 type EditPlatform = "steam" | "faceit" | "ts" | null;
 
@@ -85,6 +88,9 @@ export function Profile() {
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState("");
   const [newAvatarUrl, setNewAvatarUrl] = useState("");
+
+  // Onboarding tour replay state
+  const [tourOpen, setTourOpen] = useState(false);
 
   const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
 
@@ -633,6 +639,38 @@ export function Profile() {
         </div>
       </section>
 
+      {/* Help & Interactive Onboarding Tour */}
+      <section className="space-y-2">
+        <h2 className="text-xs font-bold text-[#949BA4] px-1 uppercase tracking-wider">
+          Обучение и справка
+        </h2>
+        <div
+          onClick={() => {
+            triggerHaptic("selection");
+            setTourOpen(true);
+          }}
+          className="bg-[#2B2D31] border border-white/5 rounded-2xl p-3.5 flex items-center justify-between gap-3 hover:border-white/10 transition-all cursor-pointer shadow-sm active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#3F5F96]/20 border border-[#3F5F96]/30 flex items-center justify-center text-[#8BA4CC] shrink-0">
+              <Sparkles className="w-5 h-5 text-[#8BA4CC]" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-white flex items-center gap-1.5">
+                <span>Интерактивный гид</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#23A55A]/20 text-[#23A55A] font-semibold">
+                  5 шагов
+                </span>
+              </div>
+              <p className="text-xs text-[#949BA4] mt-0.5">
+                Пройти обучение по всем фичам readyOn
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#949BA4]" />
+        </div>
+      </section>
+
       {/* Profile Edit Modal (Name & Avatar Source) */}
       {editProfileOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
@@ -1122,6 +1160,9 @@ export function Profile() {
           </div>
         </div>
       )}
+
+      {/* Interactive Onboarding Tour Modal */}
+      <OnboardingTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
     </div>
   );
 }

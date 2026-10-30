@@ -9,8 +9,9 @@ import {
 import { StatusSelector } from "../components/StatusSelector.js";
 import { MemberCard } from "../components/MemberCard.js";
 import { getSocket } from "../services/socket.js";
-import { Crosshair, Users, ChevronDown, RefreshCw, Flame, Share2, Check } from "lucide-react";
+import { Crosshair, Users, ChevronDown, RefreshCw, Flame, Share2, Check, HelpCircle } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics.js";
+import { OnboardingTour } from "../components/OnboardingTour.js";
 
 export function Dashboard() {
   const telegramId = getCurrentTelegramId();
@@ -21,6 +22,23 @@ export function Dashboard() {
   const [currentStatus, setCurrentStatus] = useState<ReadyStatusType>("UNSET");
   const [availableFrom, setAvailableFrom] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+
+  useEffect(() => {
+    // Show onboarding tour automatically on first visit
+    const completed = localStorage.getItem("readyon_onboarding_completed");
+    if (!completed) {
+      const timer = setTimeout(() => {
+        setTourOpen(true);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleCloseTour = () => {
+    localStorage.setItem("readyon_onboarding_completed", "true");
+    setTourOpen(false);
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -183,22 +201,35 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Refresh button */}
-        <button
-          onClick={() => {
-            triggerHaptic("selection");
-            loadData();
-          }}
-          disabled={loading || updating}
-          className="w-9 h-9 rounded-xl bg-[#2B2D31] border border-white/5 flex items-center justify-center text-[#949BA4] hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
-          title="Обновить"
-        >
-          <RefreshCw
-            className={`w-4 h-4 transition-all ${
-              loading || updating ? "animate-spin text-[#8BA4CC]" : "text-[#949BA4]"
-            }`}
-          />
-        </button>
+        {/* Action buttons: Help/Tour + Refresh */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              triggerHaptic("selection");
+              setTourOpen(true);
+            }}
+            className="w-9 h-9 rounded-xl bg-[#2B2D31] border border-white/5 flex items-center justify-center text-[#949BA4] hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
+            title="Гид и обучение"
+          >
+            <HelpCircle className="w-4 h-4 text-[#8BA4CC]" />
+          </button>
+
+          <button
+            onClick={() => {
+              triggerHaptic("selection");
+              loadData();
+            }}
+            disabled={loading || updating}
+            className="w-9 h-9 rounded-xl bg-[#2B2D31] border border-white/5 flex items-center justify-center text-[#949BA4] hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
+            title="Обновить"
+          >
+            <RefreshCw
+              className={`w-4 h-4 transition-all ${
+                loading || updating ? "animate-spin text-[#8BA4CC]" : "text-[#949BA4]"
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Group Selector Pill & Ready Counter */}
@@ -331,6 +362,9 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Interactive Onboarding Tour */}
+      <OnboardingTour isOpen={tourOpen} onClose={handleCloseTour} />
     </div>
   );
 }
