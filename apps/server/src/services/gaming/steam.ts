@@ -99,6 +99,9 @@ export class SteamService {
         if (p.gameextrainfo) {
           status = "in_game";
           gameName = p.gameextrainfo;
+        } else if (p.gameid) {
+          status = "in_game";
+          gameName = p.gameid === "730" ? "Counter-Strike 2" : `AppID ${p.gameid}`;
         } else if (p.personastate && p.personastate > 0) {
           status = "online";
         }

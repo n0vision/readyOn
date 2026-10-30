@@ -2,6 +2,7 @@ import type { BotContext } from "../index.js";
 import { prisma } from "../../db/prisma.js";
 import type { ReadyStatus } from "@prisma/client";
 import { notificationEngine } from "../../services/notification/engine.js";
+import { broadcastGroupUpdate } from "../../websocket/index.js";
 import {
   STATUS_EMOJI,
   STATUS_TEXT,
@@ -41,12 +42,18 @@ export async function handleStatusCallback(ctx: BotContext) {
     },
   });
 
+  const userGroups = await prisma.groupMember.findMany({
+    where: { userId: user.id },
+    select: { groupId: true },
+  });
+
+  // Broadcast real-time update to all connected Mini Apps
+  for (const g of userGroups) {
+    broadcastGroupUpdate(g.groupId);
+  }
+
   // Check if group full stack reached & notify friends
   if (status === "READY") {
-    const userGroups = await prisma.groupMember.findMany({
-      where: { userId: user.id },
-      select: { groupId: true },
-    });
     for (const g of userGroups) {
       notificationEngine.checkGroupFullStack(g.groupId).catch(() => {});
     }

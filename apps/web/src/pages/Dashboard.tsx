@@ -8,6 +8,7 @@ import {
 } from "../services/api.js";
 import { StatusSelector } from "../components/StatusSelector.js";
 import { MemberCard } from "../components/MemberCard.js";
+import { getSocket } from "../services/socket.js";
 import { Crosshair, Users, ChevronDown, RefreshCw, Flame, Share2, Check } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics.js";
 
@@ -54,6 +55,35 @@ export function Dashboard() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Real-time synchronization via Socket.IO
+  useEffect(() => {
+    const groupId = selectedGroup?.group?.id;
+    if (!groupId) return;
+
+    const socket = getSocket();
+    socket.emit("join:group", groupId);
+
+    const handleUpdate = async (data: { groupId?: number }) => {
+      if (!data.groupId || data.groupId === groupId) {
+        try {
+          const updated = await fetchGroupStatus(groupId);
+          setSelectedGroup(updated);
+        } catch (err) {
+          console.error("Real-time update error:", err);
+        }
+      }
+    };
+
+    socket.on("group:updated", handleUpdate);
+    socket.on("status:updated", handleUpdate);
+
+    return () => {
+      socket.emit("leave:group", groupId);
+      socket.off("group:updated", handleUpdate);
+      socket.off("status:updated", handleUpdate);
+    };
+  }, [selectedGroup?.group?.id]);
 
   const handleStatusChange = async (status: ReadyStatusType) => {
     setCurrentStatus(status);

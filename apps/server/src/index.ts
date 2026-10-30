@@ -5,6 +5,7 @@ import { prisma } from "./db/prisma.js";
 import { redis } from "./db/redis.js";
 import { gamingPoller } from "./services/gaming/poller.js";
 import { notificationEngine } from "./services/notification/engine.js";
+import { initSocketServer } from "./websocket/index.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
@@ -23,6 +24,10 @@ async function main() {
   const server = await createServer();
   await server.listen({ port: PORT, host: "0.0.0.0" });
   console.log(`✅ API server running on http://localhost:${PORT}`);
+
+  // Initialize Socket.IO real-time server
+  initSocketServer(server.server);
+  console.log("✅ Socket.IO real-time server initialized");
 
   // Start background gaming poller (Steam, FACEIT, TeamSpeak)
   gamingPoller.start();

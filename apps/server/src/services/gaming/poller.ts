@@ -4,6 +4,7 @@ import { steamService } from "./steam.js";
 import { faceitService } from "./faceit.js";
 import { teamspeakService } from "./teamspeak.js";
 import { notificationEngine } from "../notification/engine.js";
+import { broadcastGroupUpdate } from "../../websocket/index.js";
 
 export class GamingStatusPoller {
   private isRunning: boolean = false;
@@ -147,6 +148,15 @@ export class GamingStatusPoller {
             tsChannel,
           },
         });
+
+        // Broadcast real-time update to squad Mini Apps
+        const userGroups = await prisma.groupMember.findMany({
+          where: { userId: user.id },
+          select: { groupId: true },
+        });
+        for (const g of userGroups) {
+          broadcastGroupUpdate(g.groupId);
+        }
 
         // Notify friends if user started CS2
         if (steamGame && steamGame.toLowerCase().includes("counter-strike")) {

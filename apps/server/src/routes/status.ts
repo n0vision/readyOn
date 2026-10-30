@@ -3,6 +3,7 @@ import { prisma } from "../db/prisma.js";
 import type { ReadyStatus } from "@prisma/client";
 import { getToday } from "../bot/commands/status.js";
 import { notificationEngine } from "../services/notification/engine.js";
+import { broadcastGroupUpdate } from "../websocket/index.js";
 
 
 export const statusRoutes: FastifyPluginAsync = async (app) => {
@@ -59,11 +60,17 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
       create: { userId: user.id, date: today, status, availableFrom, availableUntil, comment },
     });
 
+    const userGroups = await prisma.groupMember.findMany({
+      where: { userId: user.id },
+      select: { groupId: true },
+    });
+
+    // Real-time WebSocket broadcast to all group members
+    for (const g of userGroups) {
+      broadcastGroupUpdate(g.groupId);
+    }
+
     if (status === "READY") {
-      const userGroups = await prisma.groupMember.findMany({
-        where: { userId: user.id },
-        select: { groupId: true },
-      });
       for (const g of userGroups) {
         notificationEngine.checkGroupFullStack(g.groupId).catch(() => {});
       }
