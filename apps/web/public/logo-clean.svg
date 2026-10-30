@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Solid Dark Background -->
+  <rect width="512" height="512" fill="#1E1F22" />
+
+  <!-- Clean Centered Crosshair in Brand Color #8BA4CC -->
+  <g transform="translate(106, 106) scale(12.5)" stroke="#8BA4CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="22" y1="12" x2="18" y2="12" />
+    <line x1="6" y1="12" x2="2" y2="12" />
+    <line x1="12" y1="2" x2="12" y2="6" />
+    <line x1="12" y1="22" x2="12" y2="18" />
+  </g>
+</svg>
