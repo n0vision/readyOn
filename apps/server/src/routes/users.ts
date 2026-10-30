@@ -184,4 +184,64 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
       isHomeSet: result?.isHomeSet || false,
     };
   });
+
+  // GET /api/users/:identifier/gaming-stats — расширенная игровая статистика (FACEIT 30 матчей, W/L, K/D, %HS)
+  app.get<{ Params: { identifier: string } }>("/:identifier/gaming-stats", async (req, reply) => {
+    const raw = req.params.identifier;
+    let user = null;
+
+    if (/^\d{6,15}$/.test(raw)) {
+      // Telegram ID
+      user = await prisma.user.findUnique({
+        where: { telegramId: BigInt(raw) },
+        include: { onlineStatus: true },
+      });
+    }
+
+    if (!user && /^\d+$/.test(raw)) {
+      // User ID
+      user = await prisma.user.findUnique({
+        where: { id: parseInt(raw, 10) },
+        include: { onlineStatus: true },
+      });
+    }
+
+    if (!user) {
+      return reply.status(404).send({ error: "User not found" });
+    }
+
+    let faceitStats = null;
+    if (user.faceitId) {
+      faceitStats = await faceitService.getDetailedStats(user.faceitId);
+    } else if (user.steamId) {
+      // Попробовать найти по SteamID
+      const fSummary = await faceitService.getPlayerBySteamId(user.steamId);
+      if (fSummary?.playerId) {
+        faceitStats = await faceitService.getDetailedStats(fSummary.playerId);
+      }
+    }
+
+    const steamProfileUrl = user.steamId
+      ? `https://steamcommunity.com/profiles/${user.steamId}`
+      : null;
+
+    return {
+      user: {
+        id: user.id,
+        telegramId: user.telegramId.toString(),
+        displayName: user.displayName,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+        steamId: user.steamId,
+        faceitId: user.faceitId,
+        tsIdentity: user.tsIdentity,
+      },
+      onlineStatus: user.onlineStatus,
+      faceit: faceitStats,
+      steam: {
+        steamId: user.steamId,
+        profileUrl: steamProfileUrl,
+      },
+    };
+  });
 };

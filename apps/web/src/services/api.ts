@@ -267,3 +267,12 @@ export async function sendUserLocation(
   }
   return res.json();
 }
+
+export async function fetchMemberGamingStats(identifier: string | number) {
+  const res = await fetch(`${API_BASE}/api/users/${identifier}/gaming-stats`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to fetch member gaming stats");
+  }
+  return res.json();
+}

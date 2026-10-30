@@ -1,3 +1,5 @@
+import { redis } from "../../db/redis.js";
+
 /**
  * FACEIT Open Data API v4 Client
  * Docs: https://developers.faceit.com/docs/tools/data-api
@@ -10,6 +12,37 @@ export interface FaceitPlayerSummary {
   elo: number | null;
   level: number | null;
   status: "available" | "in_match" | "offline";
+}
+
+export interface FaceitRecentMatch {
+  matchId: string;
+  result: "W" | "L";
+  map: string;
+  score: string;
+  kd: number;
+  kills: number;
+  deaths: number;
+  headshotsPercent: number;
+  finishedAt: number;
+}
+
+export interface FaceitDetailedStats {
+  playerId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  elo: number | null;
+  level: number | null;
+  matchesCount: number;
+  last5: FaceitRecentMatch[];
+  stats30: {
+    winrate: number;
+    kd: number;
+    hsPercent: number;
+    wins: number;
+    losses: number;
+    totalKills: number;
+    totalDeaths: number;
+  };
 }
 
 export class FaceitService {
@@ -139,6 +172,148 @@ export class FaceitService {
     }
 
     return false;
+  }
+
+  /**
+   * Получить детальную статистику за последние 30 игр (Winrate, K/D, %HS) и последние 5 матчей
+   */
+  async getDetailedStats(playerIdOrNickname: string): Promise<FaceitDetailedStats | null> {
+    if (!this.apiKey) return null;
+
+    let playerId = playerIdOrNickname;
+    let baseSummary: FaceitPlayerSummary | null = null;
+
+    // Если передан никнейм (не UUID), находим playerId
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(playerId)) {
+      baseSummary = await this.getPlayerByNickname(playerIdOrNickname);
+      if (!baseSummary?.playerId) return null;
+      playerId = baseSummary.playerId;
+    }
+
+    const cacheKey = `faceit:detailed:${playerId}`;
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch {
+      // Redis fallback
+    }
+
+    try {
+      if (!baseSummary) {
+        // Загрузить базовую инфу об игроке
+        const pUrl = `https://open.faceit.com/data/v4/players/${playerId}`;
+        const pRes = await fetch(pUrl, {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            Accept: "application/json",
+          },
+        });
+        if (pRes.ok) {
+          const pData: any = await pRes.json();
+          const cs2 = pData.games?.cs2 || pData.games?.csgo;
+          baseSummary = {
+            playerId: pData.player_id,
+            nickname: pData.nickname,
+            avatarUrl: pData.avatar || null,
+            elo: cs2?.faceit_elo || null,
+            level: cs2?.skill_level || null,
+            status: "available",
+          };
+        }
+      }
+
+      // Загрузить последние 30 игр CS2
+      let statsUrl = `https://open.faceit.com/data/v4/players/${playerId}/games/cs2/stats?limit=30`;
+      let res = await fetch(statsUrl, {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        // Fallback на CS:GO если CS2 матчей нет
+        statsUrl = `https://open.faceit.com/data/v4/players/${playerId}/games/csgo/stats?limit=30`;
+        res = await fetch(statsUrl, {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            Accept: "application/json",
+          },
+        });
+      }
+
+      if (!res.ok) return null;
+
+      const data: any = await res.json();
+      const items: any[] = data.items || [];
+
+      // Последние 5 игр (W / L)
+      const last5: FaceitRecentMatch[] = items.slice(0, 5).map((m: any) => {
+        const s = m.stats || {};
+        return {
+          matchId: s["Match Id"] || m.match_id || "",
+          result: s.Result === "1" ? ("W" as const) : ("L" as const),
+          map: (s.Map || "cs2").replace(/^de_/, "").toUpperCase(),
+          score: s.Score || s["Final Score"] || "-",
+          kd: parseFloat(s["K/D Ratio"] || "1"),
+          kills: parseInt(s.Kills || "0", 10),
+          deaths: parseInt(s.Deaths || "0", 10),
+          headshotsPercent: parseInt(s["Headshots %"] || "0", 10),
+          finishedAt: s["Match Finished At"] || Date.now(),
+        };
+      });
+
+      // Расчет за последние 30 игр
+      const totalMatches = items.length;
+      const wins = items.filter((m: any) => m.stats?.Result === "1").length;
+      const losses = totalMatches - wins;
+      const winrate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
+
+      const totalKills = items.reduce(
+        (acc: number, m: any) => acc + parseInt(m.stats?.Kills || "0", 10),
+        0
+      );
+      const totalDeaths = items.reduce(
+        (acc: number, m: any) => acc + parseInt(m.stats?.Deaths || "0", 10),
+        0
+      );
+      const totalHs = items.reduce(
+        (acc: number, m: any) => acc + parseInt(m.stats?.Headshots || "0", 10),
+        0
+      );
+
+      const kd = totalDeaths > 0 ? parseFloat((totalKills / totalDeaths).toFixed(2)) : totalKills;
+      const hsPercent = totalKills > 0 ? Math.round((totalHs / totalKills) * 100) : 0;
+
+      const result: FaceitDetailedStats = {
+        playerId,
+        nickname: baseSummary?.nickname || "Игрок",
+        avatarUrl: baseSummary?.avatarUrl || null,
+        elo: baseSummary?.elo || null,
+        level: baseSummary?.level || null,
+        matchesCount: totalMatches,
+        last5,
+        stats30: {
+          winrate,
+          kd,
+          hsPercent,
+          wins,
+          losses,
+          totalKills,
+          totalDeaths,
+        },
+      };
+
+      // Сохраняем в кэш на 5 минут (300 сек)
+      await redis.set(cacheKey, JSON.stringify(result), "EX", 300).catch(() => {});
+
+      return result;
+    } catch (err) {
+      console.error("FACEIT getDetailedStats error:", err);
+      return null;
+    }
   }
 }
 
