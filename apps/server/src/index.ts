@@ -3,6 +3,7 @@ import { createServer } from "./server.js";
 import { createBot, BOT_COMMANDS } from "./bot/index.js";
 import { prisma } from "./db/prisma.js";
 import { redis } from "./db/redis.js";
+import { gamingPoller } from "./services/gaming/poller.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
@@ -21,6 +22,9 @@ async function main() {
   const server = await createServer();
   await server.listen({ port: PORT, host: "0.0.0.0" });
   console.log(`✅ API server running on http://localhost:${PORT}`);
+
+  // Start background gaming poller (Steam, FACEIT, TeamSpeak)
+  gamingPoller.start();
 
   // Start Telegram bot (if configured)
   const bot = createBot();
@@ -41,6 +45,7 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     console.log("\n🛑 Shutting down...");
+    gamingPoller.stop();
     if (bot) bot.stop();
     await server.close();
     await prisma.$disconnect();

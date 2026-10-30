@@ -3,6 +3,7 @@ import { prisma } from "../db/prisma.js";
 import type { ReadyStatus } from "@prisma/client";
 import { getToday } from "../bot/commands/status.js";
 
+
 export const statusRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/status/:telegramId — получить статус пользователя на сегодня
   app.get<{ Params: { telegramId: string } }>("/:telegramId", async (req, reply) => {
@@ -104,4 +105,4 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
   });
 };
 
-import { getToday } from "../bot/commands/status.js";
+

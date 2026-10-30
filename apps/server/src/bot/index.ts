@@ -4,6 +4,7 @@ import { startCommand } from "./commands/start.js";
 import { menuCommand } from "./commands/menu.js";
 import { statusCommand } from "./commands/status.js";
 import { groupCommand, showGroupsWithInvites } from "./commands/group.js";
+import { linkCommand, unlinkCommand } from "./commands/link.js";
 import { handleStatusCallback, handleGroupStatusRefresh } from "./callbacks/status.js";
 import { handleLocationUpdate } from "./handlers/location.js";
 import { prisma } from "../db/prisma.js";
@@ -19,6 +20,7 @@ export const BOT_COMMANDS = [
   { command: "menu", description: "Главное меню с кнопками" },
   { command: "status", description: "Кто сегодня готов играть" },
   { command: "group", description: "Твоя группа и ссылка-инвайт" },
+  { command: "link", description: "Привязать Steam / FACEIT / TeamSpeak" },
   { command: "ready", description: "Отметить готовность (🟢)" },
   { command: "maybe", description: "Маловероятно / попозже (🟡)" },
   { command: "busy", description: "Сегодня никак не могу (🔴)" },
@@ -50,6 +52,8 @@ export function createBot(): Bot<BotContext> | null {
   bot.command("maybe", (ctx) => statusCommand(ctx, "UNLIKELY"));
   bot.command("status", (ctx) => statusCommand(ctx, "VIEW"));
   bot.command("group", groupCommand);
+  bot.command("link", linkCommand);
+  bot.command("unlink", unlinkCommand);
 
   // Inline keyboard callbacks
   bot.callbackQuery(/^status:/, handleStatusCallback);

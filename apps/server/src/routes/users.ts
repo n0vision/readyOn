@@ -1,5 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { prisma } from "../db/prisma.js";
+import { steamService } from "../services/gaming/steam.js";
+import { gamingPoller } from "../services/gaming/poller.js";
 
 export const userRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/users/:telegramId — профиль пользователя
@@ -34,21 +36,29 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
   // PUT /api/users/:telegramId/integrations — обновить привязки
   app.put<{
     Params: { telegramId: string };
-    Body: { steamId?: string; faceitId?: string; tsIdentity?: string };
+    Body: { steamId?: string | null; faceitId?: string | null; tsIdentity?: string | null };
   }>("/:telegramId/integrations", async (req, reply) => {
     const telegramId = BigInt(req.params.telegramId);
-    const { steamId, faceitId, tsIdentity } = req.body;
+    let { steamId, faceitId, tsIdentity } = req.body;
+
+    if (steamId) {
+      const resolved = await steamService.resolveSteamId(steamId);
+      if (resolved) steamId = resolved;
+    }
 
     const user = await prisma.user.update({
       where: { telegramId },
       data: {
-        ...(steamId !== undefined && { steamId }),
-        ...(faceitId !== undefined && { faceitId }),
-        ...(tsIdentity !== undefined && { tsIdentity }),
+        ...(steamId !== undefined && { steamId: steamId || null }),
+        ...(faceitId !== undefined && { faceitId: faceitId || null }),
+        ...(tsIdentity !== undefined && { tsIdentity: tsIdentity || null }),
       },
     });
 
-    return { success: true };
+    // Trigger instant check
+    gamingPoller.poll().catch(() => {});
+
+    return { success: true, steamId, faceitId, tsIdentity };
   });
 
   // PUT /api/users/:telegramId/notifications — настройки уведомлений

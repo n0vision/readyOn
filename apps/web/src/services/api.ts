@@ -123,3 +123,16 @@ export async function fetchUserProfile(telegramId: string) {
   if (!res.ok) throw new Error("Failed to fetch profile");
   return res.json();
 }
+
+export async function updateUserIntegrations(
+  telegramId: string,
+  data: { steamId?: string | null; faceitId?: string | null; tsIdentity?: string | null }
+) {
+  const res = await fetch(`${API_BASE}/api/users/${telegramId}/integrations`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update integrations");
+  return res.json();
+}
