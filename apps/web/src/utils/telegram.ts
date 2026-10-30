@@ -41,8 +41,10 @@ export function initTelegramFullscreen() {
         0;
 
       // In Telegram Fullscreen, floating header controls take at least 56-64px
+      // Adding +10px extra margin as requested to eliminate any iPhone notch/Dynamic Island overlap
       const isFullscreen = tg.isFullscreen || typeof tg.requestFullscreen === "function";
-      const effectiveTop = Math.max(contentTop, isFullscreen ? 60 : 0);
+      const baseTop = Math.max(contentTop, isFullscreen ? 70 : 0);
+      const effectiveTop = baseTop + 10;
 
       document.documentElement.style.setProperty("--app-safe-top", `${effectiveTop}px`);
       document.documentElement.style.setProperty("--app-safe-bottom", `${contentBottom}px`);
