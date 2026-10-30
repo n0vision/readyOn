@@ -10,7 +10,7 @@ import {
   fetchGroupStatus,
 } from "../services/api.js";
 
-const TIME_OPTIONS = ["Now", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"];
+const TIME_OPTIONS = ["Сейчас", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"];
 
 export function Dashboard() {
   const telegramId = getCurrentTelegramId();
@@ -87,7 +87,7 @@ export function Dashboard() {
 
   const handleSelectTime = async (time: string) => {
     const formatted =
-      time === "Now"
+      time === "Сейчас"
         ? new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" })
         : time;
 
@@ -128,7 +128,7 @@ export function Dashboard() {
   const neededCount = Math.max(0, targetSize - readyCount);
 
   return (
-    <div className="p-4 space-y-4 max-w-lg mx-auto pb-36">
+    <div className="p-4 space-y-4 max-w-lg mx-auto pb-40">
       {/* Top Header: Logo + Bell */}
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2">
@@ -136,18 +136,23 @@ export function Dashboard() {
           <div className="text-[#00f076] text-2xl font-bold leading-none drop-shadow-[0_0_10px_rgba(0,240,118,0.7)]">
             ⌖
           </div>
-          <h1 className="text-xl font-black tracking-tight text-white flex items-center">
-            <span>ready</span>
-            <span className="text-[#00f076]">On</span>
-          </h1>
+          <div>
+            <h1 className="text-xl font-black tracking-tight text-white flex items-center">
+              <span>ready</span>
+              <span className="text-[#00f076]">On</span>
+            </h1>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-white/40">
+              CS2 КООРДИНАТОР СКВАДА
+            </p>
+          </div>
         </div>
 
         {/* Bell / Refresh icon */}
         <button
           onClick={loadData}
           disabled={loading || updating}
-          className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
-          title="Refresh"
+          className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+          title="Обновить"
         >
           <span className={loading || updating ? "animate-spin text-sm" : "text-sm"}>
             {loading || updating ? "🔄" : "🔔"}
@@ -165,7 +170,7 @@ export function Dashboard() {
                 const gId = Number(e.target.value);
                 fetchGroupStatus(gId).then(setSelectedGroup);
               }}
-              className="appearance-none bg-[#161c28] border border-white/10 rounded-xl px-3 py-1.5 pr-7 text-xs font-semibold text-white cursor-pointer focus:outline-none"
+              className="appearance-none bg-[#161c28] border border-white/10 rounded-xl px-3.5 py-2 pr-8 text-xs font-bold text-white cursor-pointer focus:outline-none"
             >
               {groups.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -174,7 +179,7 @@ export function Dashboard() {
               ))}
             </select>
           ) : (
-            <div className="bg-[#161c28] border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-white">
+            <div className="bg-[#161c28] border border-white/10 rounded-xl px-3.5 py-2 flex items-center gap-2 text-xs font-bold text-white">
               <span>👥</span>
               <span>{selectedGroup ? selectedGroup.group.name : "CS Пацаны"}</span>
               <span className="text-[10px] text-white/50">⌵</span>
@@ -183,12 +188,12 @@ export function Dashboard() {
         </div>
 
         {/* Ready Counter Pill */}
-        <div className="bg-[#00f076]/20 border border-[#00f076]/35 text-[#00f076] font-bold text-xs px-3 py-1.5 rounded-xl shadow-[0_0_14px_rgba(0,240,118,0.25)] flex items-center gap-1.5">
-          <span>{readyCount}/{targetSize} Ready</span>
+        <div className="bg-[#00f076]/20 border border-[#00f076]/35 text-[#00f076] font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-[0_0_14px_rgba(0,240,118,0.25)] flex items-center gap-1.5">
+          <span>{readyCount}/{targetSize} готовы</span>
         </div>
       </div>
 
-      {/* Hero Status Card (READY / MAYBE / BUSY) */}
+      {/* Hero Status Card (ГОТОВ / ПОПОЗЖЕ / НЕ СЕГОДНЯ with 2.5x height) */}
       <StatusSelector
         value={currentStatus}
         availableFrom={availableFrom}
@@ -196,19 +201,21 @@ export function Dashboard() {
         onOpenTimePicker={() => setShowTimePicker(!showTimePicker)}
       />
 
-      {/* Time Picker Dropdown */}
+      {/* Time Picker Dropdown (2.5x taller buttons) */}
       {showTimePicker && (
-        <div className="hud-card p-3 rounded-2xl border border-[#00f076]/40 space-y-2 animate-in fade-in duration-200">
-          <div className="text-xs font-bold text-[#00f076]">Select ready time:</div>
-          <div className="grid grid-cols-4 gap-1.5">
+        <div className="hud-card p-4 rounded-3xl border border-[#00f076]/40 space-y-3 animate-in fade-in duration-200 shadow-xl">
+          <div className="text-xs font-black uppercase tracking-wider text-[#00f076]">
+            Во сколько сможешь играть?
+          </div>
+          <div className="grid grid-cols-4 gap-2">
             {TIME_OPTIONS.map((time) => (
               <button
                 key={time}
                 onClick={() => handleSelectTime(time)}
-                className={`py-1.5 text-xs rounded-xl font-bold transition-all ${
+                className={`h-12 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
                   availableFrom === time
-                    ? "bg-[#00f076] text-black shadow-[0_0_12px_rgba(0,240,118,0.5)]"
-                    : "bg-white/5 hover:bg-white/10 text-white/80"
+                    ? "bg-[#00f076] text-black shadow-[0_0_14px_rgba(0,240,118,0.5)] font-black"
+                    : "bg-white/5 hover:bg-white/10 text-white/80 border border-white/5"
                 }`}
               >
                 {time}
@@ -220,12 +227,21 @@ export function Dashboard() {
 
       {/* Squad Roster */}
       <section className="space-y-3 pt-1">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-[11px] font-extrabold uppercase tracking-widest text-white/50">
+            {selectedGroup ? `👥 Состав ${selectedGroup.group.name}` : "👥 Состав сквада"}
+          </h2>
+          <span className="text-[11px] text-white/40 font-semibold">
+            {totalCount} чел.
+          </span>
+        </div>
+
         {loading ? (
           <div className="hud-card rounded-2xl p-6 text-center text-xs text-white/40 animate-pulse">
-            Loading squad roster...
+            Синхронизация статусов с сервером...
           </div>
         ) : selectedGroup && selectedGroup.members.length > 0 ? (
-          <div className="space-y-3.5">
+          <div className="space-y-3">
             {selectedGroup.members.map((member) => (
               <MemberCard
                 key={member.id}
@@ -237,9 +253,9 @@ export function Dashboard() {
         ) : (
           <div className="hud-card rounded-2xl p-6 text-center text-white/50 space-y-2">
             <p className="text-3xl">👥</p>
-            <p className="font-bold text-sm text-white">No squad groups yet</p>
+            <p className="font-bold text-sm text-white">У тебя пока нет групп</p>
             <p className="text-xs text-white/60">
-              Create a group in bot:
+              Создай группу в боте командой:
               <br />
               <code className="inline-block mt-2 px-2 py-1 rounded bg-black/50 text-[#00f076] font-mono text-xs border border-white/10">
                 /group create CS Пацаны
@@ -249,23 +265,24 @@ export function Dashboard() {
         )}
       </section>
 
-      {/* Floating Bottom Banner: "2 MORE NEEDED FOR FULL STACK" */}
+      {/* Floating Bottom Banner: "ЕЩЁ N ДО ФУЛЛ-СТАКА" with perfectly aligned & sized INVITE button */}
       {selectedGroup && (
-        <div className="fixed bottom-20 left-4 right-4 max-w-lg mx-auto z-40">
-          <div className="hud-card rounded-2xl p-2.5 px-3.5 flex items-center justify-between border border-white/15 shadow-2xl backdrop-blur-xl">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🔥</span>
-              <span className="text-xs font-extrabold uppercase tracking-wide text-white">
+        <div className="fixed bottom-20 left-0 right-0 px-4 max-w-lg mx-auto z-40 pointer-events-none">
+          <div className="hud-card rounded-2xl p-2.5 px-4 flex items-center justify-between gap-3 shadow-2xl backdrop-blur-xl border border-white/20 pointer-events-auto">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="text-lg flex-shrink-0">🔥</span>
+              <span className="text-[11px] font-black uppercase tracking-wider text-white truncate">
                 {neededCount > 0
-                  ? `${neededCount} MORE NEEDED FOR FULL STACK`
-                  : "FULL STACK READY TO PLAY!"}
+                  ? `ЕЩЁ ${neededCount} ДО ФУЛЛ-СТАКА`
+                  : "ФУЛЛ-СТАК В СБОРЕ!"}
               </span>
             </div>
             <button
               onClick={handleShareInvite}
-              className="text-xs font-black uppercase tracking-wider px-4 py-1.5 rounded-xl bg-white text-black hover:bg-white/90 transition-all cursor-pointer shadow-md"
+              className="flex-shrink-0 text-[11px] font-black uppercase tracking-wider px-4 py-2 rounded-xl bg-white text-black hover:bg-white/90 active:scale-95 transition-all shadow-md flex items-center gap-1 cursor-pointer"
             >
-              INVITE
+              <span>↗️</span>
+              <span>Инвайт</span>
             </button>
           </div>
         </div>

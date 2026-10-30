@@ -15,7 +15,7 @@ test.describe("Telegram Mini App UI", () => {
     await expect(page.locator("text=Ivan")).toBeVisible();
 
     // Check ready counter badge
-    await expect(page.locator("text=/.*Ready.*/i").first()).toBeVisible();
+    await expect(page.locator("text=/.*готовы.*/i").first()).toBeVisible();
 
     // Save dashboard screenshot
     await page.screenshot({
@@ -26,23 +26,23 @@ test.describe("Telegram Mini App UI", () => {
   test("User can switch status in Mini App", async ({ page }) => {
     await page.goto("/?userId=619219842");
 
-    // Click "MAYBE"
-    const maybeBtn = page.getByRole("button", { name: /MAYBE/i });
+    // Click "ПОПОЗЖЕ"
+    const maybeBtn = page.getByRole("button", { name: /ПОПОЗЖЕ/i });
     await expect(maybeBtn).toBeVisible();
     await maybeBtn.click();
 
     // Should not show time picker
-    await expect(page.locator("text=/.*ready time.*/i")).not.toBeVisible();
+    await expect(page.locator("text=/.*сможешь играть.*/i")).not.toBeVisible();
 
-    // Click "READY"
-    const readyBtn = page.getByRole("button", { name: /READY/i });
+    // Click "ГОТОВ"
+    const readyBtn = page.getByRole("button", { name: /ГОТОВ/i });
     await readyBtn.click();
 
     // Open time picker via centered pill
-    await page.locator("text=/From.*/").click();
+    await page.getByRole("button", { name: /С \d\d:\d\d|Выбрать время/i }).click();
 
     // Time picker should appear
-    await expect(page.locator("text=/.*ready time.*/i")).toBeVisible();
+    await expect(page.locator("text=/.*сможешь играть.*/i")).toBeVisible();
 
     // Click "19:00"
     await page.getByRole("button", { name: "19:00" }).click();
@@ -50,8 +50,8 @@ test.describe("Telegram Mini App UI", () => {
     // Time picker closes and label shows time
     await expect(page.locator("text=/.*19:00.*/").first()).toBeVisible();
 
-    // Click READY to keep glowing active state
-    await page.getByRole("button", { name: /READY/i }).click();
+    // Click ГОТОВ to keep glowing active state
+    await page.getByRole("button", { name: /ГОТОВ/i }).click();
 
     // Save updated screenshot
     await page.screenshot({
@@ -63,7 +63,7 @@ test.describe("Telegram Mini App UI", () => {
     await page.goto("/?userId=619219842");
 
     // Navigate to Group tab
-    await page.getByRole("link", { name: /Group/i }).click();
+    await page.getByRole("link", { name: /Группа/i }).click();
     await expect(page.getByRole("heading", { name: "👥 Группы" })).toBeVisible();
     await expect(page.locator("text=CS Пацаны")).toBeVisible();
     await expect(page.getByRole("button", { name: /Инвайт/i })).toBeVisible();
@@ -74,13 +74,13 @@ test.describe("Telegram Mini App UI", () => {
     });
 
     // Navigate to Profile tab
-    await page.getByRole("link", { name: /Profile/i }).click();
+    await page.getByRole("link", { name: /Профиль/i }).click();
     await expect(page.locator("text=Игровые привязки")).toBeVisible();
     await expect(page.locator("text=Steam")).toBeVisible();
     await expect(page.locator("text=FACEIT")).toBeVisible();
 
     // Navigate back to Dashboard
-    await page.getByRole("link", { name: /Squad/i }).click();
+    await page.getByRole("link", { name: /Сквад/i }).click();
     await expect(page.locator("h1")).toContainText("readyOn");
   });
 });

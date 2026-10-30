@@ -1,9 +1,9 @@
 import { NavLink } from "react-router-dom";
 
 const navItems = [
-  { path: "/", label: "Squad", icon: "⊞" },
-  { path: "/groups", label: "Group", icon: "👥" },
-  { path: "/profile", label: "Profile", icon: "👤" },
+  { path: "/", label: "Сквад", icon: "⌖" },
+  { path: "/groups", label: "Группа", icon: "👥" },
+  { path: "/profile", label: "Профиль", icon: "👤" },
 ];
 
 export function NavBar() {
