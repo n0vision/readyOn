@@ -1,5 +1,4 @@
 import type { GroupMemberView, ReadyStatusType } from "@readyon/shared";
-import { THEME } from "../styles/theme.js";
 
 interface Props {
   member: GroupMemberView;
@@ -8,15 +7,52 @@ interface Props {
 
 export function MemberCard({ member, isSelf }: Props) {
   const status = (member.dailyStatus?.status || "UNSET") as ReadyStatusType;
-  const theme = THEME.status[status] || THEME.status.UNSET;
   const os = member.onlineStatus;
 
+  // Avatar glow border
+  const getAvatarGlow = () => {
+    switch (status) {
+      case "READY":
+        return "border-2 border-[#00f076] glow-ready";
+      case "UNLIKELY":
+        return "border-2 border-[#f59e0b] glow-maybe";
+      default:
+        return "border border-white/15 glow-offline opacity-70";
+    }
+  };
+
+  // Subtitle text styling
+  const renderSubtitle = () => {
+    switch (status) {
+      case "READY":
+        return (
+          <span className="text-[#94a3b8]">
+            {member.dailyStatus?.availableFrom
+              ? `Ready from ${member.dailyStatus.availableFrom}`
+              : "Ready now"}
+          </span>
+        );
+      case "UNLIKELY":
+        return (
+          <span className="text-[#f59e0b]">
+            {member.dailyStatus?.availableFrom
+              ? `Maybe after ${member.dailyStatus.availableFrom}`
+              : "Maybe later"}
+          </span>
+        );
+      case "UNAVAILABLE":
+        return <span className="text-[#ef4444]">Not today</span>;
+      default:
+        return <span className="text-[#64748b]">Offline</span>;
+    }
+  };
+
   return (
-    <div className="glass-panel rounded-2xl p-3.5 flex items-start gap-3.5 transition-all duration-200 hover:border-white/15">
-      {/* Avatar with radiant glowing status ring */}
+    <div className="hud-card rounded-2xl p-3.5 flex items-center gap-3.5 transition-all duration-200 hover:border-white/20">
+      {/* Avatar with radiant glowing ring */}
       <div className="relative flex-shrink-0">
         <div
-          className={`w-11 h-11 rounded-full bg-black/40 flex items-center justify-center text-sm font-bold text-white transition-all duration-300 ${theme.avatarRing}`}
+          className={`w-12 h-12 rounded-full bg-[#1e2535] flex items-center justify-center text-base font-bold text-white transition-all duration-300 ${getAvatarGlow()}`}
         >
           {member.avatarUrl ? (
             <img
@@ -32,78 +68,52 @@ export function MemberCard({ member, isSelf }: Props) {
 
       {/* Info & Badges */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 truncate">
-            <span className="font-semibold text-sm text-white truncate">
-              {member.displayName}
-            </span>
-            {isSelf && (
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-white/10 text-white/60">
-                Вы
-              </span>
-            )}
-          </div>
-
-          {/* Status text pill */}
-          <span
-            className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${theme.bgClass}/10 ${theme.textClass} border ${theme.borderClass}/30`}
-          >
-            {status === "READY" && member.dailyStatus?.availableFrom
-              ? `с ${member.dailyStatus.availableFrom}`
-              : theme.label}
+        <div className="flex items-center gap-1.5">
+          <span className="font-bold text-sm text-white truncate">
+            {member.displayName}
           </span>
+          {isSelf && (
+            <span className="text-xs font-normal text-white/50">(You)</span>
+          )}
         </div>
 
-        {/* Comment if any */}
-        {member.dailyStatus?.comment && (
-          <p className="text-xs text-white/50 italic mt-0.5 truncate">
-            «{member.dailyStatus.comment}»
-          </p>
-        )}
+        <p className="text-xs font-medium mt-0.5">{renderSubtitle()}</p>
 
-        {/* Gaming & Live indicators */}
+        {/* Gaming Chips */}
         {os && (
-          <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            {/* Steam status */}
-            {os.steamStatus === "in_game" && os.steamGame && (
-              <span className="bg-[#0284c7]/20 border border-[#0284c7]/30 text-[#38bdf8] text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            {/* Steam badge */}
+            {os.steamStatus === "in_game" || os.steamGame ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0284c7]/20 border border-[#0284c7]/40 text-[#38bdf8] text-[11px] font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8] animate-pulse"></span>
-                <span>{os.steamGame}</span>
+                <span>{os.steamGame || "In CS2"}</span>
               </span>
-            )}
-            {os.steamStatus === "online" && !os.steamGame && (
-              <span className="bg-[#0284c7]/15 border border-[#0284c7]/25 text-[#38bdf8]/90 text-[10px] font-medium px-2 py-0.5 rounded-full">
-                Steam
+            ) : os.steamStatus === "online" ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0284c7]/15 border border-[#0284c7]/30 text-[#38bdf8]/90 text-[11px] font-medium">
+                <span>Steam Online</span>
               </span>
-            )}
+            ) : null}
 
-            {/* FACEIT status */}
-            {os.faceitStatus === "in_match" && (
-              <span className="bg-[#ea580c]/25 border border-[#ea580c]/40 text-[#fb923c] text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+            {/* FACEIT badge */}
+            {os.faceitStatus === "in_match" ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ea580c]/25 border border-[#ea580c]/40 text-[#fb923c] text-[11px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-ping"></span>
-                <span>В матче FACEIT</span>
+                <span>In Match</span>
               </span>
-            )}
-            {os.faceitElo && (
-              <span className="bg-[#ea580c]/15 border border-[#ea580c]/30 text-[#fb923c] text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 rounded-full bg-[#f97316] text-black text-[9px] font-black flex items-center justify-center">
-                  {os.faceitLevel || "?"}
+            ) : os.faceitElo ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ea580c]/20 border border-[#ea580c]/40 text-[#fb923c] text-[11px] font-semibold">
+                <span className="text-[10px]">◀</span>
+                <span>
+                  Lvl {os.faceitLevel || 3} · {os.faceitElo} ELO
                 </span>
-                <span>{os.faceitElo} ELO</span>
               </span>
-            )}
+            ) : null}
 
-            {/* TeamSpeak status */}
-            {os.tsStatus === "connected" && (
-              <span className="bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-medium px-2 py-0.5 rounded-full">
-                🎧 {os.tsChannel || "TS3"}
-              </span>
-            )}
-
-            {/* ETA / Location status */}
+            {/* ETA chip */}
             {os.locationStatus === "transit" && os.etaMinutes && (
-              <span className="bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-medium px-2 py-0.5 rounded-full">
-                🚗 ~{os.etaMinutes} мин
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-medium">
+                <span>🚗</span>
+                <span>~{os.etaMinutes} min</span>
               </span>
             )}
           </div>
