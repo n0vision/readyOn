@@ -34,6 +34,7 @@ export interface OnlineStatusData {
 
 export interface GroupMemberView {
   id: number;
+  telegramId?: string;
   displayName: string;
   username: string | null;
   avatarUrl: string | null;

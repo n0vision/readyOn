@@ -35,7 +35,7 @@ export function Dashboard() {
 
         // Find self status in the group
         const selfMember = firstGroup.members.find(
-          (m: any) => String(m.id) === "1" || m.displayName.includes("Никита")
+          (m: any) => String(m.telegramId) === String(telegramId)
         );
         if (selfMember?.dailyStatus) {
           setCurrentStatus(selfMember.dailyStatus.status as ReadyStatusType);
@@ -234,13 +234,21 @@ export function Dashboard() {
           </div>
         ) : selectedGroup && selectedGroup.members.length > 0 ? (
           <div className="space-y-2">
-            {selectedGroup.members.map((member: any) => (
-              <MemberCard
-                key={member.id}
-                member={member}
-                isSelf={String(member.id) === "1" || member.displayName.includes("Никита")}
-              />
-            ))}
+            {[...selectedGroup.members]
+              .sort((a: any, b: any) => {
+                const aIsSelf = String(a.telegramId) === String(telegramId);
+                const bIsSelf = String(b.telegramId) === String(telegramId);
+                if (aIsSelf && !bIsSelf) return -1;
+                if (!aIsSelf && bIsSelf) return 1;
+                return 0;
+              })
+              .map((member: any) => (
+                <MemberCard
+                  key={member.id}
+                  member={member}
+                  isSelf={String(member.telegramId) === String(telegramId)}
+                />
+              ))}
           </div>
         ) : (
           <div className="bg-[#2B2D31] border border-white/5 rounded-2xl p-6 text-center text-[#949BA4] space-y-2">

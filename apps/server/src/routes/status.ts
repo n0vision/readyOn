@@ -109,6 +109,7 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
       },
       members: group.members.map((m) => ({
         id: m.user.id,
+        telegramId: m.user.telegramId.toString(),
         displayName: m.user.displayName,
         username: m.user.username,
         avatarUrl: m.user.avatarUrl,

@@ -82,4 +82,34 @@ test.describe("Telegram Mini App UI", () => {
     await page.getByRole("link", { name: /Сквад/i }).click();
     await expect(page.locator("h1")).toContainText("readyOn");
   });
+
+  test("Viewer is placed at the top of squad roster with 'Вы' badge", async ({ page }) => {
+    // 1. As Ivan (726420734)
+    await page.goto("/?userId=726420734");
+    await expect(page.locator("text=Состав команды")).toBeVisible({ timeout: 10000 });
+
+    // The first member card must be Ivan
+    const firstCardIvan = page.locator("section div.space-y-2 > div").first();
+    await expect(firstCardIvan).toContainText("Ivan");
+    await expect(firstCardIvan).toContainText("Вы");
+
+    // Save screenshot of Ivan on top
+    await page.screenshot({
+      path: "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24/ivan-on-top.png",
+    });
+
+    // 2. As Nikita (619219842)
+    await page.goto("/?userId=619219842");
+    await expect(page.locator("text=Состав команды")).toBeVisible({ timeout: 10000 });
+
+    // The first member card must be wytom
+    const firstCardNikita = page.locator("section div.space-y-2 > div").first();
+    await expect(firstCardNikita).toContainText("wytom");
+    await expect(firstCardNikita).toContainText("Вы");
+
+    // Save screenshot of wytom on top
+    await page.screenshot({
+      path: "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24/wytom-on-top.png",
+    });
+  });
 });
