@@ -12,8 +12,10 @@ export function SteamIcon({ className = "w-3.5 h-3.5 fill-current" }: { classNam
 
 export function FaceitIcon({ className = "w-3.5 h-3.5 fill-current" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.999 4.004c-.037-.818-.738-1.457-1.564-1.457H1.565C.738 2.547 0 3.186 0 4.004c0 .123.018.246.049.364L3.63 17.367a1.57 1.57 0 0 0 1.516 1.18h13.673a1.57 1.57 0 0 0 1.516-1.18l3.581-13c.031-.118.049-.241.049-.364z" />
+    <svg className={className} viewBox="0 0 782 619" fill="currentColor">
+      {/* Official FACEIT chevron with subtle facet dimensionality */}
+      <path d="M572 310L782 0v310Z" opacity="0.8" />
+      <path d="M0 310h782v309Z" />
     </svg>
   );
 }

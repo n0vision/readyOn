@@ -268,10 +268,10 @@ export function Dashboard() {
       {/* Floating Bottom Banner: "ЕЩЁ N ДО ФУЛЛ-СТАКА" with perfectly aligned & sized INVITE button */}
       {selectedGroup && (
         <div className="fixed bottom-20 left-0 right-0 px-4 max-w-lg mx-auto z-40 pointer-events-none">
-          <div className="hud-card rounded-2xl p-2.5 px-4 flex items-center justify-between gap-3 shadow-2xl backdrop-blur-xl border border-white/20 pointer-events-auto">
+          <div className="hud-card rounded-full py-2 pl-5 pr-3 flex items-center justify-between gap-3 shadow-2xl backdrop-blur-xl border border-white/20 pointer-events-auto">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <span className="text-lg flex-shrink-0">🔥</span>
-              <span className="text-[11px] font-black uppercase tracking-wider text-white truncate">
+              <span className="text-xs font-black uppercase tracking-wider text-white truncate">
                 {neededCount > 0
                   ? `ЕЩЁ ${neededCount} ДО ФУЛЛ-СТАКА`
                   : "ФУЛЛ-СТАК В СБОРЕ!"}
@@ -279,10 +279,9 @@ export function Dashboard() {
             </div>
             <button
               onClick={handleShareInvite}
-              className="flex-shrink-0 text-[11px] font-black uppercase tracking-wider px-4 py-2 rounded-xl bg-white text-black hover:bg-white/90 active:scale-95 transition-all shadow-md flex items-center gap-1 cursor-pointer"
+              className="flex-shrink-0 h-9 px-5 rounded-full bg-white text-black font-black text-xs uppercase tracking-wider hover:bg-white/90 active:scale-95 transition-all shadow-md flex items-center justify-center cursor-pointer"
             >
-              <span>↗️</span>
-              <span>Инвайт</span>
+              ИНВАЙТ
             </button>
           </div>
         </div>

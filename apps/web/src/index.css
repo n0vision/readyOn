@@ -9,9 +9,7 @@
   --neon-green-glow: 0 0 20px rgba(0, 240, 118, 0.5);
 }
 
-* {
-  margin: 0;
-  padding: 0;
+*, ::before, ::after {
   box-sizing: border-box;
 }
 

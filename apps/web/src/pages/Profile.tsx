@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getCurrentTelegramId, fetchUserProfile, updateUserIntegrations } from "../services/api.js";
+import { SteamIcon, FaceitIcon } from "../components/Icons.js";
 
 type EditPlatform = "steam" | "faceit" | "ts" | null;
 
@@ -77,14 +78,14 @@ export function Profile() {
         </h2>
 
         <IntegrationCard
-          icon="🎮"
+          icon={<SteamIcon className="w-6 h-6 fill-[#38bdf8]" />}
           name="Steam"
           description={profile?.steamId ? `ID: ${profile.steamId}` : "Показывать игру и онлайн-статус"}
           connected={Boolean(profile?.steamId)}
           onClick={() => openEdit("steam")}
         />
         <IntegrationCard
-          icon="🎯"
+          icon={<FaceitIcon className="w-6 h-6 fill-[#fb923c]" />}
           name="FACEIT"
           description={profile?.faceitId ? `Ник: ${profile.faceitId}` : "Матчи, ELO и уровень"}
           connected={Boolean(profile?.faceitId)}
@@ -186,7 +187,7 @@ function IntegrationCard({
   readOnly,
   onClick,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   name: string;
   description: string;
   connected: boolean;
@@ -200,7 +201,7 @@ function IntegrationCard({
         !readOnly ? "cursor-pointer hover:border-white/20 active:scale-[0.99]" : ""
       }`}
     >
-      <span className="text-2xl">{icon}</span>
+      <span className="text-2xl flex items-center justify-center w-8 h-8 flex-shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
         <div className="font-medium text-xs text-[var(--tg-theme-text-color)]">{name}</div>
         <div className="text-[11px] text-[var(--tg-theme-hint-color)] truncate">{description}</div>

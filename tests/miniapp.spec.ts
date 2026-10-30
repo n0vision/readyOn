@@ -79,6 +79,11 @@ test.describe("Telegram Mini App UI", () => {
     await expect(page.locator("text=Steam")).toBeVisible();
     await expect(page.locator("text=FACEIT")).toBeVisible();
 
+    // Save profile screenshot
+    await page.screenshot({
+      path: "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24/profile-tab.png",
+    });
+
     // Navigate back to Dashboard
     await page.getByRole("link", { name: /Сквад/i }).click();
     await expect(page.locator("h1")).toContainText("readyOn");
