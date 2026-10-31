@@ -13,8 +13,12 @@ export async function generatePatchnoteBanner(
   patch: Patchnote = getLatestPatchnote(),
   screenshotSourcePath?: string
 ): Promise<{ serverBannerPath: string; webBannerPath: string; relativeUrl: string }> {
-  const serverDir = path.resolve(process.cwd(), "apps/server/assets/banners");
-  const webDir = path.resolve(process.cwd(), "apps/web/public/banners");
+  let rootDir = process.cwd();
+  if (rootDir.endsWith("apps\\server") || rootDir.endsWith("apps/server")) {
+    rootDir = path.resolve(rootDir, "../..");
+  }
+  const serverDir = path.resolve(rootDir, "apps/server/assets/banners");
+  const webDir = path.resolve(rootDir, "apps/web/public/banners");
 
   fs.mkdirSync(serverDir, { recursive: true });
   fs.mkdirSync(webDir, { recursive: true });
@@ -39,18 +43,37 @@ export async function generatePatchnoteBanner(
     }
   }
 
-  const highlightPills = patch.changes
+  const highlightCards = patch.changes
     .slice(0, 4)
     .map((c) => {
-      const emoji = c.type === "new" ? "✨" : c.type === "improved" ? "⚡️" : "🛠";
+      const emoji =
+        c.shortTitle?.includes("FACEIT") || c.title.includes("FACEIT")
+          ? "🟠"
+          : c.shortTitle?.includes("ETA") || c.title.includes("ETA")
+          ? "🚗"
+          : c.shortTitle?.includes("Онбординг") || c.title.includes("Onboarding")
+          ? "🔔"
+          : "📊";
+
+      const title = c.shortTitle || c.title;
+      const subtitle = c.highlight || c.title;
+
       return `
-        <div style="display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 8px 14px; border-radius: 12px;">
-          <span style="font-size: 16px;">${emoji}</span>
-          <span style="color: #F2F3F5; font-size: 14px; font-weight: 700;">${c.title}</span>
+        <div class="highlight-card">
+          <div class="card-icon">${emoji}</div>
+          <div class="card-texts">
+            <div class="card-title">${title}</div>
+            <div class="card-sub">${subtitle}</div>
+          </div>
         </div>
       `;
     })
     .join("");
+
+  const displayTitle =
+    patch.id === "v1.3.0"
+      ? `CS2 СТАТИСТИКА,<br /><span class="highlight-text">РЕЙТИНГ & LIVE ETA</span>`
+      : `${patch.title}`;
 
   const html = `
     <!DOCTYPE html>
@@ -62,7 +85,7 @@ export async function generatePatchnoteBanner(
           body {
             width: 1200px;
             height: 675px;
-            background: #131416;
+            background: #111214;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: #FFFFFF;
             overflow: hidden;
@@ -73,23 +96,23 @@ export async function generatePatchnoteBanner(
             position: absolute;
             top: -150px;
             left: -100px;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(63, 95, 150, 0.25) 0%, rgba(19, 20, 22, 0) 70%);
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(63, 95, 150, 0.32) 0%, rgba(17, 18, 20, 0) 70%);
             pointer-events: none;
           }
           .bg-glow-2 {
             position: absolute;
-            bottom: -100px;
-            right: 200px;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(35, 165, 90, 0.2) 0%, rgba(19, 20, 22, 0) 70%);
+            bottom: -120px;
+            right: 250px;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(35, 165, 90, 0.25) 0%, rgba(17, 18, 20, 0) 70%);
             pointer-events: none;
           }
           .content-left {
             flex: 1.25;
-            padding: 56px 40px 56px 60px;
+            padding: 50px 30px 50px 60px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -102,17 +125,18 @@ export async function generatePatchnoteBanner(
           }
           .logo-badge {
             background: #2B2D31;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
           }
           .app-title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 900;
             letter-spacing: -0.5px;
           }
@@ -120,57 +144,116 @@ export async function generatePatchnoteBanner(
           .version-pill {
             background: #23A55A;
             color: #FFFFFF;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 800;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 20px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            box-shadow: 0 2px 10px rgba(35, 165, 90, 0.4);
+          }
+          .release-date {
+            font-size: 14px;
+            color: #949BA4;
+            font-weight: 600;
           }
           .main-title {
-            font-size: 38px;
+            font-size: 50px;
             font-weight: 900;
-            line-height: 1.15;
+            line-height: 1.08;
             color: #FFFFFF;
-            letter-spacing: -0.8px;
+            letter-spacing: -1.2px;
             margin-top: 18px;
+            text-transform: uppercase;
+          }
+          .main-title .highlight-text {
+            color: #8BA4CC;
+            display: inline-block;
           }
           .summary-text {
-            font-size: 16px;
+            font-size: 17px;
             color: #949BA4;
-            line-height: 1.5;
-            margin-top: 14px;
-            max-width: 560px;
+            font-weight: 500;
+            line-height: 1.4;
+            margin-top: 10px;
+            max-width: 580px;
           }
           .highlights-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 14px;
             margin-top: 24px;
+          }
+          .highlight-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(43, 45, 49, 0.75);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 18px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+          }
+          .card-icon {
+            font-size: 30px;
+            line-height: 1;
+            flex-shrink: 0;
+          }
+          .card-texts {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow: hidden;
+          }
+          .card-title {
+            color: #FFFFFF;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          .card-sub {
+            color: #8BA4CC;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
           .footer-note {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #8BA4CC;
+            gap: 12px;
+            font-size: 15px;
+            color: #DBDEE1;
             font-weight: 600;
+          }
+          .bot-badge {
+            background: #2B2D31;
+            border: 1px solid #3F5F96;
+            color: #8BA4CC;
+            font-weight: 800;
+            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 8px;
           }
           .content-right {
             flex: 0.95;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 60px 40px 10px;
+            padding: 30px 50px 30px 10px;
             z-index: 2;
           }
           .phone-frame {
-            width: 290px;
-            height: 560px;
+            width: 300px;
+            height: 575px;
             background: #1E1F22;
-            border: 5px solid #2B2D31;
-            border-radius: 36px;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(63, 95, 150, 0.25);
+            border: 6px solid #2B2D31;
+            border-radius: 40px;
+            box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.9), 0 0 50px rgba(63, 95, 150, 0.3);
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -182,9 +265,9 @@ export async function generatePatchnoteBanner(
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 80px;
-            height: 16px;
-            background: #131416;
+            width: 85px;
+            height: 18px;
+            background: #111214;
             border-radius: 10px;
             z-index: 10;
           }
@@ -208,20 +291,20 @@ export async function generatePatchnoteBanner(
                 <div class="app-title">ready<span>On</span></div>
               </div>
               <div class="version-pill">${patch.version} ${patch.badge || "UPDATE"}</div>
-              <div style="font-size: 12px; color: #949BA4; font-weight: 600;">${patch.date}</div>
+              <div class="release-date">${patch.date}</div>
             </div>
 
-            <h1 class="main-title">${patch.title}</h1>
+            <h1 class="main-title">${displayTitle}</h1>
             <p class="summary-text">${patch.summary}</p>
 
             <div class="highlights-grid">
-              ${highlightPills}
+              ${highlightCards}
             </div>
           </div>
 
           <div class="footer-note">
-            <span>🔔</span>
-            <span>Для подписки на будущие обновления отправьте в боте: /newson</span>
+            <div class="bot-badge">💬 /newson</div>
+            <span>Подробности обновления описаны в посте</span>
           </div>
         </div>
 

@@ -7,6 +7,15 @@ import { getToday, STATUS_EMOJI, STATUS_TEXT } from "../../bot/commands/status.j
 import type { BotContext } from "../../bot/index.js";
 import { getLatestPatchnote, type Patchnote } from "@readyon/shared";
 
+export const ADMIN_TELEGRAM_IDS = new Set<string>([
+  "619219842", // wytom (Никита)
+  ...(process.env.ADMIN_TELEGRAM_ID ? [process.env.ADMIN_TELEGRAM_ID] : []),
+]);
+
+export function isAdminTelegramUser(telegramId: bigint | number | string): boolean {
+  return ADMIN_TELEGRAM_IDS.has(telegramId.toString());
+}
+
 export class NotificationEngine {
   private bot: Bot<BotContext> | null = null;
   private cronTask: cron.ScheduledTask | null = null;
@@ -68,11 +77,17 @@ export class NotificationEngine {
   async sendToUser(
     telegramId: bigint | number | string,
     text: string,
-    keyboard?: InlineKeyboard
+    keyboard?: InlineKeyboard,
+    options?: { allowAdmin?: boolean }
   ): Promise<boolean> {
     if (!this.bot) return false;
-    if (this.isTestMode()) {
-      return true; // Mock delivery in test mode to avoid spamming real users
+    const tidStr = telegramId.toString();
+    const isAdmin = isAdminTelegramUser(tidStr);
+
+    // In automated test mode, protect other users from spam.
+    // The admin user (619219842) explicitly wants to receive test notifications.
+    if (this.isTestMode() && (!isAdmin || !options?.allowAdmin)) {
+      return true; // Mock delivery in test mode
     }
 
     try {
@@ -104,10 +119,14 @@ export class NotificationEngine {
     telegramId: bigint | number | string,
     photoPathOrUrl: string,
     caption: string,
-    keyboard?: InlineKeyboard
+    keyboard?: InlineKeyboard,
+    options?: { allowAdmin?: boolean }
   ): Promise<boolean> {
     if (!this.bot) return false;
-    if (this.isTestMode()) {
+    const tidStr = telegramId.toString();
+    const isAdmin = isAdminTelegramUser(tidStr);
+
+    if (this.isTestMode() && (!isAdmin || !options?.allowAdmin)) {
       return true; // Mock delivery in test mode
     }
 
@@ -116,8 +135,12 @@ export class NotificationEngine {
         photoPathOrUrl.startsWith("http://") || photoPathOrUrl.startsWith("https://");
       const photoSource = isUrl ? photoPathOrUrl : new InputFile(photoPathOrUrl);
 
+      // Telegram caption limit is 1024 chars
+      const safeCaption =
+        caption.length > 1020 ? caption.slice(0, 1017) + "..." : caption;
+
       await this.bot.api.sendPhoto(Number(telegramId), photoSource, {
-        caption,
+        caption: safeCaption,
         parse_mode: "Markdown",
         reply_markup: keyboard,
       });
@@ -125,7 +148,7 @@ export class NotificationEngine {
     } catch (err: any) {
       console.warn(`Failed to send photo notification to ${telegramId}:`, err.message);
       // Fallback to text message if photo delivery fails
-      return this.sendToUser(telegramId, caption, keyboard);
+      return this.sendToUser(telegramId, caption, keyboard, options);
     }
   }
 
@@ -136,7 +159,12 @@ export class NotificationEngine {
     telegramId: bigint | number | string,
     dryRun: boolean = false
   ): Promise<{ success: boolean; dryRun?: boolean; error?: string }> {
-    if (dryRun || this.isTestMode()) {
+    const tidStr = telegramId.toString();
+    const isAdmin = isAdminTelegramUser(tidStr);
+
+    // If dryRun is requested and it's NOT the admin user
+    // (the admin explicitly wants test notifications to be delivered to him)
+    if (dryRun && !isAdmin) {
       return { success: true, dryRun: true };
     }
 
@@ -145,7 +173,7 @@ export class NotificationEngine {
     }
 
     const text =
-      `🔔 **Тестовое уведомление readyOn**\n\n` +
+      `🔔 *Тестовое уведомление readyOn*\n\n` +
       `Всё работает отлично! Бот присылает уведомления о:\n` +
       `• Готовности тиммейтов к игре\n` +
       `• Сборе полного сквада (фулл стак)\n` +
@@ -157,7 +185,7 @@ export class NotificationEngine {
       data: "status:READY:now",
     });
 
-    const sent = await this.sendToUser(telegramId, text, keyboard);
+    const sent = await this.sendToUser(telegramId, text, keyboard, { allowAdmin: true });
     if (!sent) {
       return {
         success: false,
@@ -179,7 +207,7 @@ export class NotificationEngine {
       });
     }
 
-    return { success: true };
+    return { success: true, dryRun: false };
   }
 
   /**

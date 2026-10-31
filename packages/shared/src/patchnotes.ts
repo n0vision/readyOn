@@ -4,6 +4,8 @@ export interface PatchnoteChange {
   type: PatchnoteChangeType;
   title: string;
   description: string;
+  shortTitle?: string;
+  highlight?: string;
 }
 
 export interface Patchnote {
@@ -41,36 +43,48 @@ export const PATCHNOTES: Patchnote[] = [
       {
         type: "new",
         title: "Детализированная карточка игрока",
+        shortTitle: "Карточка игрока",
+        highlight: "История 5 игр W/L, K/D, % HS",
         description:
           "Тапни по любой карточке в блоке «СОСТАВ КОМАНДЫ», чтобы увидеть винрейт, K/D, % хедшотов за 30 игр и историю последних 5 матчей (W/L) с картой и счетом.",
       },
       {
         type: "new",
         title: "Динамический FACEIT Рейтинг",
+        shortTitle: "FACEIT Рейтинг",
+        highlight: "Честный импакт за 30 матчей",
         description:
           "Честный расчет персонального рейтинга результативности и импакта строго за последние 30 матчей (HLTV 2.0 модель).",
       },
       {
         type: "new",
         title: "Геолокация и расчет Live ETA",
+        shortTitle: "Live Location & ETA",
+        highlight: "Время до дома для сквада",
         description:
           "Задай домашнюю точку через /sethome или Mini App. Отправляй Live Location боту при выезде с работы, и сквад увидит точный ETA (время до дома в минутах). 100% приватность: точные координаты никому не видны.",
       },
       {
         type: "new",
         title: "Интерактивный Onboarding для новичков",
+        shortTitle: "Новости & Онбординг",
+        highlight: "Колокольчик и пошаговый гид",
         description:
           "Быстрый 5-шаговый тур по всем возможностям сервиса с тактильным откликом Telegram Haptics. Запустить можно в любой момент из профиля или центра новостей.",
       },
       {
         type: "improved",
         title: "Колокольчик новостей и патчноутов",
+        shortTitle: "Центр обновлений",
+        highlight: "Счетчик без поп-апов",
         description:
           "Никаких всплывающих окон при входе: колокольчик в шапке покажет количество свежих непрочитанных постов.",
       },
       {
         type: "improved",
         title: "Команды /help, /patchnotes и /newson в боте",
+        shortTitle: "Команды в боте",
+        highlight: "Управление подпиской /newson",
         description:
           "Полная инструкция в боте, просмотр чейнджлога в чате и подписка на рассылку будущих обновлений через /newson.",
       },

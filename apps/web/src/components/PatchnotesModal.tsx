@@ -62,8 +62,8 @@ export function PatchnotesModal({
   return (
     <div
       style={{
-        paddingTop: "max(calc(var(--app-safe-top, 0px) + 16px), 72px)",
-        paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 24px), 32px)",
+        paddingTop: "max(calc(var(--app-safe-top, 0px) + 20px), 76px)",
+        paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 72px), 84px)",
         paddingLeft: "16px",
         paddingRight: "16px",
       }}
@@ -73,7 +73,7 @@ export function PatchnotesModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           maxHeight:
-            "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 16px), 72px) - max(calc(var(--app-safe-bottom, 0px) + 24px), 32px))",
+            "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 20px), 76px) - max(calc(var(--app-safe-bottom, 0px) + 72px), 84px))",
         }}
         className="bg-[#2B2D31] border border-white/10 rounded-2xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden animate-scaleUp"
       >

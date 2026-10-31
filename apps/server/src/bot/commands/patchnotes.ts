@@ -52,12 +52,37 @@ export async function patchnotesCommand(ctx: BotContext) {
   // Check if banner photo exists on disk for visual preview
   const bannerFile = path.resolve(process.cwd(), "apps/server/assets/banners", `${patch.id}.png`);
   if (fs.existsSync(bannerFile)) {
+    const safeCaption =
+      text.length <= 1020
+        ? text
+        : `📜 *readyOn Patchnotes — ${patch.version}*\n` +
+          `_${patch.date}_\n\n` +
+          `*${patch.title}*\n\n` +
+          patch.changes
+            .slice(0, 4)
+            .map((c) => {
+              const emoji = c.type === "new" ? "✨" : c.type === "improved" ? "⚡️" : "🛠";
+              return `${emoji} *${c.title}*\n${c.description}`;
+            })
+            .join("\n\n") +
+          `\n\n───────────────\n` +
+          (isSubscribed
+            ? `✅ _Вы подписаны на рассылку (/newsoff для отключения)_`
+            : `🔔 _Подписка на обновления: /newson_`);
+
     try {
       await ctx.replyWithPhoto(new InputFile(bannerFile), {
-        caption: text,
+        caption: safeCaption,
         parse_mode: "Markdown",
         reply_markup: keyboard,
       });
+
+      // If text was trimmed due to 1024-character caption limit, send full detailed log as follow-up
+      if (text.length > 1020) {
+        await ctx.reply(text, {
+          parse_mode: "Markdown",
+        });
+      }
       return;
     } catch (e: any) {
       console.warn("replyWithPhoto failed, fallback to text:", e.message);

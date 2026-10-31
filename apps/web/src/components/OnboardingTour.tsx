@@ -114,8 +114,8 @@ export function OnboardingTour({ isOpen, onClose }: Props) {
   return (
     <div
       style={{
-        paddingTop: "max(calc(var(--app-safe-top, 0px) + 16px), 72px)",
-        paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 24px), 32px)",
+        paddingTop: "max(calc(var(--app-safe-top, 0px) + 20px), 76px)",
+        paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 72px), 84px)",
         paddingLeft: "16px",
         paddingRight: "16px",
       }}
@@ -124,7 +124,7 @@ export function OnboardingTour({ isOpen, onClose }: Props) {
       <div
         style={{
           maxHeight:
-            "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 16px), 72px) - max(calc(var(--app-safe-bottom, 0px) + 24px), 32px))",
+            "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 20px), 76px) - max(calc(var(--app-safe-bottom, 0px) + 72px), 84px))",
         }}
         className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-3xl p-5 shadow-2xl relative overflow-hidden flex flex-col space-y-4"
       >
