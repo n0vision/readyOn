@@ -709,8 +709,20 @@ export function Profile() {
 
       {/* Profile Edit Modal (Name & Avatar Source) */}
       {editProfileOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-[#2B2D31] border border-white/10 rounded-2xl p-4 w-full max-w-sm space-y-4 shadow-2xl">
+        <div
+          style={{
+            paddingTop: "max(calc(var(--app-safe-top, 0px) + 16px), 72px)",
+            paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 24px), 32px)",
+          }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-fadeIn"
+        >
+          <div
+            style={{
+              maxHeight:
+                "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 16px), 72px) - max(calc(var(--app-safe-bottom, 0px) + 24px), 32px))",
+            }}
+            className="bg-[#2B2D31] border border-white/10 rounded-2xl p-4 w-full max-w-sm space-y-4 shadow-2xl overflow-y-auto"
+          >
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
                 <User className="w-4 h-4 text-[#8BA4CC]" />
@@ -814,8 +826,20 @@ export function Profile() {
 
       {/* Integration Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-[#2B2D31] border border-white/10 rounded-2xl p-4 w-full max-w-sm space-y-3.5 shadow-2xl">
+        <div
+          style={{
+            paddingTop: "max(calc(var(--app-safe-top, 0px) + 16px), 72px)",
+            paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 24px), 32px)",
+          }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-fadeIn"
+        >
+          <div
+            style={{
+              maxHeight:
+                "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 16px), 72px) - max(calc(var(--app-safe-bottom, 0px) + 24px), 32px))",
+            }}
+            className="bg-[#2B2D31] border border-white/10 rounded-2xl p-4 w-full max-w-sm space-y-3.5 shadow-2xl overflow-y-auto"
+          >
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm text-white">
                 {editing === "steam" && "Привязать Steam"}
@@ -869,8 +893,20 @@ export function Profile() {
 
       {/* Calendar Management Modal */}
       {calendarModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+        <div
+          style={{
+            paddingTop: "max(calc(var(--app-safe-top, 0px) + 16px), 72px)",
+            paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 24px), 32px)",
+          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div
+            style={{
+              maxHeight:
+                "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 16px), 72px) - max(calc(var(--app-safe-bottom, 0px) + 24px), 32px))",
+            }}
+            className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4 overflow-y-auto"
+          >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">
@@ -1081,8 +1117,20 @@ export function Profile() {
 
       {/* Geolocation Management Modal */}
       {locationModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+        <div
+          style={{
+            paddingTop: "max(calc(var(--app-safe-top, 0px) + 16px), 72px)",
+            paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 24px), 32px)",
+          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div
+            style={{
+              maxHeight:
+                "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 16px), 72px) - max(calc(var(--app-safe-bottom, 0px) + 24px), 32px))",
+            }}
+            className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4 overflow-y-auto"
+          >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">

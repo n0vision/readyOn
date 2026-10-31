@@ -112,8 +112,22 @@ export function OnboardingTour({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn select-none">
-      <div className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-3xl p-5 shadow-2xl relative overflow-hidden flex flex-col space-y-4">
+    <div
+      style={{
+        paddingTop: "max(calc(var(--app-safe-top, 0px) + 16px), 72px)",
+        paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 24px), 32px)",
+        paddingLeft: "16px",
+        paddingRight: "16px",
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fadeIn select-none"
+    >
+      <div
+        style={{
+          maxHeight:
+            "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 16px), 72px) - max(calc(var(--app-safe-bottom, 0px) + 24px), 32px))",
+        }}
+        className="w-full max-w-sm bg-[#2B2D31] border border-white/10 rounded-3xl p-5 shadow-2xl relative overflow-hidden flex flex-col space-y-4"
+      >
         {/* Subtle decorative glow */}
         <div
           className="absolute -top-12 -right-12 w-36 h-36 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors duration-500"

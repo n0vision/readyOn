@@ -60,10 +60,22 @@ export function PatchnotesModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3.5 z-50 animate-fadeIn">
+    <div
+      style={{
+        paddingTop: "max(calc(var(--app-safe-top, 0px) + 16px), 72px)",
+        paddingBottom: "max(calc(var(--app-safe-bottom, 0px) + 24px), 32px)",
+        paddingLeft: "16px",
+        paddingRight: "16px",
+      }}
+      className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] animate-fadeIn"
+    >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#2B2D31] border border-white/10 rounded-2xl w-full max-w-md max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-scaleUp"
+        style={{
+          maxHeight:
+            "calc(100dvh - max(calc(var(--app-safe-top, 0px) + 16px), 72px) - max(calc(var(--app-safe-bottom, 0px) + 24px), 32px))",
+        }}
+        className="bg-[#2B2D31] border border-white/10 rounded-2xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden animate-scaleUp"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5 shrink-0 bg-[#2B2D31]">
