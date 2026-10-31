@@ -16,13 +16,14 @@ test.describe("Patchnotes and News Hub", () => {
     expect(data.latest.title).toContain("Большое обновление");
   });
 
-  test("POST /api/patchnotes/broadcast executes broadcast", async ({ request }) => {
+  test("POST /api/patchnotes/broadcast executes broadcast in dryRun mode without spamming users", async ({ request }) => {
     const res = await request.post(`${API_BASE}/api/patchnotes/broadcast`, {
-      data: { first: true },
+      data: { first: true, dryRun: true },
     });
     expect(res.ok()).toBeTruthy();
     const data = await res.json();
     expect(data.success).toBe(true);
+    expect(data.dryRun).toBe(true);
     expect(data.broadcast).toHaveProperty("total");
   });
 

@@ -125,13 +125,16 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
   // POST /api/users/:telegramId/test-notification — отправить тестовое уведомление в Telegram бот
   app.post<{
     Params: { telegramId: string };
+    Body?: { dryRun?: boolean };
+    Querystring?: { dryRun?: string };
   }>("/:telegramId/test-notification", async (req, reply) => {
     const telegramId = BigInt(req.params.telegramId);
-    const result = await notificationEngine.sendTestNotification(telegramId);
+    const dryRun = req.body?.dryRun === true || req.query.dryRun === "true";
+    const result = await notificationEngine.sendTestNotification(telegramId, dryRun);
     if (!result.success) {
       return reply.status(400).send({ error: result.error || "Failed to send test notification" });
     }
-    return { success: true };
+    return { success: true, dryRun };
   });
 
   // POST /api/users/:telegramId/home — сохранить или сбросить точку «Дом»

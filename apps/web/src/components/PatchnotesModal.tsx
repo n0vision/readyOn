@@ -131,6 +131,18 @@ export function PatchnotesModal({
               key={patch.id}
               className="bg-[#1E1F22] border border-white/5 rounded-xl p-3.5 space-y-3"
             >
+              {/* Optional Visual Banner */}
+              {patch.bannerUrl && (
+                <div className="w-full h-36 rounded-lg overflow-hidden border border-white/5 relative bg-[#131416]">
+                  <img
+                    src={patch.bannerUrl}
+                    alt={patch.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+
               {/* Version title row */}
               <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
                 <div className="flex items-center gap-2">

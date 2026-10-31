@@ -114,10 +114,13 @@ test.describe("Backend REST API", () => {
     expect(prof.notificationSettings.friend_cs2).toBe(true);
   });
 
-  test("POST /api/users/:telegramId/test-notification sends test bot message", async ({ request }) => {
-    const res = await request.post(`${API_BASE}/api/users/${TELEGRAM_ID}/test-notification`);
+  test("POST /api/users/:telegramId/test-notification checks test notification endpoint with dryRun", async ({ request }) => {
+    const res = await request.post(`${API_BASE}/api/users/${TELEGRAM_ID}/test-notification`, {
+      data: { dryRun: true },
+    });
     expect(res.status()).toBe(200);
     const data = await res.json();
     expect(data.success).toBe(true);
+    expect(data.dryRun).toBe(true);
   });
 });

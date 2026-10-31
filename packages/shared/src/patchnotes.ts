@@ -13,8 +13,18 @@ export interface Patchnote {
   title: string;
   summary: string;
   badge?: "LATEST" | "MAJOR" | "HOTFIX";
+  bannerUrl?: string; // Relative URL for web (e.g. /banners/v1.3.0.png)
+  bannerFilePath?: string; // Local path on server for Telegram sendPhoto
   changes: PatchnoteChange[];
 }
+
+/**
+ * Business Rule:
+ * Minor changes (fixes, UI adjustments, tweaks) must accumulate up to 5 items
+ * before a new patchnote is published and broadcast to Telegram users.
+ * Major features can be released immediately with an accompanying generated banner.
+ */
+export const MINOR_CHANGES_BATCH_THRESHOLD = 5;
 
 export const PATCHNOTES: Patchnote[] = [
   {
@@ -25,6 +35,8 @@ export const PATCHNOTES: Patchnote[] = [
     summary:
       "Раскрывающаяся карточка игрока, динамический FACEIT рейтинг, геолокация с ETA до дома, интерактивный гид и центр обновлений.",
     badge: "LATEST",
+    bannerUrl: "/banners/v1.3.0.png",
+    bannerFilePath: "apps/server/assets/banners/v1.3.0.png",
     changes: [
       {
         type: "new",

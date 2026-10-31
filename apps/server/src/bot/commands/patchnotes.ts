@@ -1,4 +1,6 @@
-import { InlineKeyboard } from "grammy";
+import { InlineKeyboard, InputFile } from "grammy";
+import fs from "fs";
+import path from "path";
 import type { BotContext } from "../index.js";
 import { getLatestPatchnote } from "@readyon/shared";
 import { prisma } from "../../db/prisma.js";
@@ -45,6 +47,21 @@ export async function patchnotesCommand(ctx: BotContext) {
     keyboard.text("🔕 Отключить рассылку", "news:unsubscribe");
   } else {
     keyboard.text("🔔 Подписаться на новости", "news:subscribe");
+  }
+
+  // Check if banner photo exists on disk for visual preview
+  const bannerFile = path.resolve(process.cwd(), "apps/server/assets/banners", `${patch.id}.png`);
+  if (fs.existsSync(bannerFile)) {
+    try {
+      await ctx.replyWithPhoto(new InputFile(bannerFile), {
+        caption: text,
+        parse_mode: "Markdown",
+        reply_markup: keyboard,
+      });
+      return;
+    } catch (e: any) {
+      console.warn("replyWithPhoto failed, fallback to text:", e.message);
+    }
   }
 
   await ctx.reply(text, {

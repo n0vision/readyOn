@@ -1,5 +1,7 @@
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot, InlineKeyboard, InputFile } from "grammy";
 import cron from "node-cron";
+import fs from "fs";
+import path from "path";
 import { prisma } from "../../db/prisma.js";
 import { getToday, STATUS_EMOJI, STATUS_TEXT } from "../../bot/commands/status.js";
 import type { BotContext } from "../../bot/index.js";
@@ -8,6 +10,18 @@ import { getLatestPatchnote, type Patchnote } from "@readyon/shared";
 export class NotificationEngine {
   private bot: Bot<BotContext> | null = null;
   private cronTask: cron.ScheduledTask | null = null;
+
+  /**
+   * Helper to determine if we are in automated test mode
+   * to avoid dispatching real Telegram messages to live users.
+   */
+  isTestMode(): boolean {
+    return (
+      process.env.NODE_ENV === "test" ||
+      process.env.TEST_MODE === "true" ||
+      process.env.DISABLE_BOT_NOTIFICATIONS === "true"
+    );
+  }
 
   setBot(bot: Bot<BotContext>) {
     this.bot = bot;
@@ -57,6 +71,9 @@ export class NotificationEngine {
     keyboard?: InlineKeyboard
   ): Promise<boolean> {
     if (!this.bot) return false;
+    if (this.isTestMode()) {
+      return true; // Mock delivery in test mode to avoid spamming real users
+    }
 
     try {
       await this.bot.api.sendMessage(Number(telegramId), text, {
@@ -81,9 +98,48 @@ export class NotificationEngine {
   }
 
   /**
+   * Safely send a photo with formatted caption and keyboard
+   */
+  async sendPhotoToUser(
+    telegramId: bigint | number | string,
+    photoPathOrUrl: string,
+    caption: string,
+    keyboard?: InlineKeyboard
+  ): Promise<boolean> {
+    if (!this.bot) return false;
+    if (this.isTestMode()) {
+      return true; // Mock delivery in test mode
+    }
+
+    try {
+      const isUrl =
+        photoPathOrUrl.startsWith("http://") || photoPathOrUrl.startsWith("https://");
+      const photoSource = isUrl ? photoPathOrUrl : new InputFile(photoPathOrUrl);
+
+      await this.bot.api.sendPhoto(Number(telegramId), photoSource, {
+        caption,
+        parse_mode: "Markdown",
+        reply_markup: keyboard,
+      });
+      return true;
+    } catch (err: any) {
+      console.warn(`Failed to send photo notification to ${telegramId}:`, err.message);
+      // Fallback to text message if photo delivery fails
+      return this.sendToUser(telegramId, caption, keyboard);
+    }
+  }
+
+  /**
    * Send an instant test notification to a user to verify delivery
    */
-  async sendTestNotification(telegramId: bigint | number | string): Promise<{ success: boolean; error?: string }> {
+  async sendTestNotification(
+    telegramId: bigint | number | string,
+    dryRun: boolean = false
+  ): Promise<{ success: boolean; dryRun?: boolean; error?: string }> {
+    if (dryRun || this.isTestMode()) {
+      return { success: true, dryRun: true };
+    }
+
     if (!this.bot) {
       return { success: false, error: "Bot is not initialized" };
     }
@@ -536,14 +592,16 @@ export class NotificationEngine {
   }
 
   /**
-   * Broadcast patchnotes to users
+   * Broadcast patchnotes to users with banner photo (if present)
    * @param patch Patchnote to send (defaults to latest)
    * @param forceAll If true, sends to all users (for the initial announcement); if false, sends only to users subscribed via /newson
+   * @param dryRun If true or in test mode, does not dispatch real Telegram messages
    */
   async broadcastPatchnote(
     patch: Patchnote = getLatestPatchnote(),
-    forceAll: boolean = false
-  ): Promise<{ total: number; sent: number; skipped: number; failed: number }> {
+    forceAll: boolean = false,
+    dryRun: boolean = false
+  ): Promise<{ total: number; sent: number; skipped: number; failed: number; dryRun?: boolean }> {
     const allUsers = await prisma.user.findMany();
 
     const targetUsers = forceAll
@@ -553,9 +611,23 @@ export class NotificationEngine {
           return settings.news === true;
         });
 
+    const skipped = allUsers.length - targetUsers.length;
+
+    // In dry-run or automated test mode, return counts immediately without sending actual messages
+    if (dryRun || this.isTestMode()) {
+      return { total: allUsers.length, sent: targetUsers.length, skipped, failed: 0, dryRun: true };
+    }
+
     let sent = 0;
     let failed = 0;
-    const skipped = allUsers.length - targetUsers.length;
+
+    // Check if banner image exists on disk for visual photo broadcast
+    const bannerPath =
+      patch.bannerFilePath && fs.existsSync(patch.bannerFilePath)
+        ? patch.bannerFilePath
+        : path.resolve(process.cwd(), "apps/server/assets/banners", `${patch.id}.png`);
+
+    const hasPhotoBanner = fs.existsSync(bannerPath);
 
     const changesSummary = patch.changes
       .slice(0, 4)
@@ -592,7 +664,13 @@ export class NotificationEngine {
         keyboard.text("🔔 Подписаться на новости", "news:subscribe");
       }
 
-      const isSuccess = await this.sendToUser(user.telegramId, message, keyboard);
+      let isSuccess = false;
+      if (hasPhotoBanner) {
+        isSuccess = await this.sendPhotoToUser(user.telegramId, bannerPath, message, keyboard);
+      } else {
+        isSuccess = await this.sendToUser(user.telegramId, message, keyboard);
+      }
+
       if (isSuccess) {
         sent++;
         await prisma.notificationLog.create({
