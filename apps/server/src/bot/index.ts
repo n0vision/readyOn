@@ -68,7 +68,9 @@ export function createBot(): Bot<BotContext> | null {
   bot.command("help", helpCommand);
   bot.command("guide", helpCommand);
   bot.command("patchnotes", patchnotesCommand);
+  bot.command("patchnote", patchnotesCommand);
   bot.command("news", patchnotesCommand);
+  bot.command("changelog", patchnotesCommand);
   bot.command("newson", newsonCommand);
   bot.command("newsoff", newsoffCommand);
   bot.command("ready", (ctx) => statusCommand(ctx, "READY"));

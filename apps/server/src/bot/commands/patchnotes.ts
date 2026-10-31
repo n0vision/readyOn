@@ -4,6 +4,7 @@ import path from "path";
 import type { BotContext } from "../index.js";
 import { getLatestPatchnote } from "@readyon/shared";
 import { prisma } from "../../db/prisma.js";
+import { getBannerFilePath } from "../../services/patchnotes/banner.js";
 
 export async function patchnotesCommand(ctx: BotContext) {
   const patch = getLatestPatchnote();
@@ -19,24 +20,36 @@ export async function patchnotesCommand(ctx: BotContext) {
     isSubscribed = settings.news === true;
   }
 
-  const changesList = patch.changes
-    .map((c) => {
-      const emoji = c.type === "new" ? "✨" : c.type === "improved" ? "⚡️" : "🛠";
-      return `${emoji} *${c.title}*\n${c.description}`;
-    })
-    .join("\n\n");
-
-  const text =
+  // Format the complete changelog to fit strictly within 1010 characters so photo + text are in ONE single message
+  const header =
     `📜 *readyOn Patchnotes — ${patch.version}*\n` +
     `_${patch.date}_\n\n` +
-    `*${patch.title}*\n` +
-    `${patch.summary}\n\n` +
-    `───────────────\n` +
-    `${changesList}\n\n` +
-    `───────────────\n` +
+    `*${patch.title}*\n\n`;
+
+  const footer =
+    `\n───────────────\n` +
     (isSubscribed
-      ? `✅ _Вы подписаны на рассылку будущих обновлений (/newsoff для отключения)_`
-      : `🔔 _Хотите получать новости о будущих обновлениях? Отправьте команду /newson_`);
+      ? `✅ _Вы подписаны на рассылку (/newsoff для отключения)_`
+      : `🔔 _Подписка на обновления: /newson_`);
+
+  const maxChangesLength = 1010 - header.length - footer.length;
+  let changesList = "";
+
+  for (const c of patch.changes) {
+    const emoji = c.type === "new" ? "✨" : c.type === "improved" ? "⚡️" : "🛠";
+    const line = `${emoji} *${c.title}*\n${c.description}\n\n`;
+    if ((changesList + line).length <= maxChangesLength) {
+      changesList += line;
+    } else {
+      const shortDesc = c.highlight || c.description.slice(0, 70);
+      const shortLine = `${emoji} *${c.title}* — ${shortDesc}\n`;
+      if ((changesList + shortLine).length <= maxChangesLength) {
+        changesList += shortLine;
+      }
+    }
+  }
+
+  const messageText = header + changesList.trim() + footer;
 
   const keyboard = new InlineKeyboard();
   if (miniAppUrl.startsWith("https://")) {
@@ -50,46 +63,21 @@ export async function patchnotesCommand(ctx: BotContext) {
   }
 
   // Check if banner photo exists on disk for visual preview
-  const bannerFile = path.resolve(process.cwd(), "apps/server/assets/banners", `${patch.id}.png`);
-  if (fs.existsSync(bannerFile)) {
-    const safeCaption =
-      text.length <= 1020
-        ? text
-        : `📜 *readyOn Patchnotes — ${patch.version}*\n` +
-          `_${patch.date}_\n\n` +
-          `*${patch.title}*\n\n` +
-          patch.changes
-            .slice(0, 4)
-            .map((c) => {
-              const emoji = c.type === "new" ? "✨" : c.type === "improved" ? "⚡️" : "🛠";
-              return `${emoji} *${c.title}*\n${c.description}`;
-            })
-            .join("\n\n") +
-          `\n\n───────────────\n` +
-          (isSubscribed
-            ? `✅ _Вы подписаны на рассылку (/newsoff для отключения)_`
-            : `🔔 _Подписка на обновления: /newson_`);
-
+  const bannerFile = getBannerFilePath(patch.id);
+  if (bannerFile && fs.existsSync(bannerFile)) {
     try {
       await ctx.replyWithPhoto(new InputFile(bannerFile), {
-        caption: safeCaption,
+        caption: messageText,
         parse_mode: "Markdown",
         reply_markup: keyboard,
       });
-
-      // If text was trimmed due to 1024-character caption limit, send full detailed log as follow-up
-      if (text.length > 1020) {
-        await ctx.reply(text, {
-          parse_mode: "Markdown",
-        });
-      }
       return;
     } catch (e: any) {
-      console.warn("replyWithPhoto failed, fallback to text:", e.message);
+      console.warn("replyWithPhoto failed, fallback to plain text:", e.message);
     }
   }
 
-  await ctx.reply(text, {
+  await ctx.reply(messageText, {
     parse_mode: "Markdown",
     reply_markup: keyboard,
   });

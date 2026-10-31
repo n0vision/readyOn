@@ -6,6 +6,7 @@ import { prisma } from "../../db/prisma.js";
 import { getToday, STATUS_EMOJI, STATUS_TEXT } from "../../bot/commands/status.js";
 import type { BotContext } from "../../bot/index.js";
 import { getLatestPatchnote, type Patchnote } from "@readyon/shared";
+import { getBannerFilePath } from "../patchnotes/banner.js";
 
 export const ADMIN_TELEGRAM_IDS = new Set<string>([
   "619219842", // wytom (Никита)
@@ -653,9 +654,9 @@ export class NotificationEngine {
     const bannerPath =
       patch.bannerFilePath && fs.existsSync(patch.bannerFilePath)
         ? patch.bannerFilePath
-        : path.resolve(process.cwd(), "apps/server/assets/banners", `${patch.id}.png`);
+        : getBannerFilePath(patch.id);
 
-    const hasPhotoBanner = fs.existsSync(bannerPath);
+    const hasPhotoBanner = Boolean(bannerPath && fs.existsSync(bannerPath));
 
     const changesSummary = patch.changes
       .slice(0, 4)

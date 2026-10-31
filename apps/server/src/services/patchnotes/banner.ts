@@ -4,6 +4,28 @@ import path from "path";
 import { type Patchnote, getLatestPatchnote } from "@readyon/shared";
 
 /**
+ * Resolves the absolute disk path to a patchnote banner image
+ * across both root workspace and apps/server working directories.
+ */
+export function getBannerFilePath(patchId: string): string | null {
+  const candidates = [
+    path.resolve(process.cwd(), "assets/banners", `${patchId}.png`),
+    path.resolve(process.cwd(), "apps/server/assets/banners", `${patchId}.png`),
+    path.resolve(process.cwd(), "../apps/server/assets/banners", `${patchId}.png`),
+    path.resolve(process.cwd(), "../../apps/server/assets/banners", `${patchId}.png`),
+    path.resolve(
+      "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24",
+      "patchnote-banner-v1.3.0.png"
+    ),
+  ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+/**
  * Generates a promotional banner image for a patchnote combining:
  * 1. Title, version badge and key highlights
  * 2. Real screenshot of the new feature in a sleek device frame
