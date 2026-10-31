@@ -4,15 +4,17 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "dev": "turbo dev",
-    "start:dev": "powershell -ExecutionPolicy Bypass -File scripts/start-dev.ps1",
+    "start": "powershell -ExecutionPolicy Bypass -File start.ps1",
+    "stop": "powershell -ExecutionPolicy Bypass -File stop.ps1",
+    "start:dev": "powershell -ExecutionPolicy Bypass -File start.ps1",
     "test": "playwright test",
     "build": "turbo build",
     "lint": "turbo lint",
     "db:generate": "pnpm --filter @readyon/server exec prisma generate",
     "db:migrate": "pnpm --filter @readyon/server exec prisma migrate dev",
     "db:push": "pnpm --filter @readyon/server exec prisma db push",
-    "docker:up": "docker compose -f docker-compose.dev.yml up -d",
-    "docker:down": "docker compose -f docker-compose.dev.yml down"
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

@@ -1,0 +1,85 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: readyon-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: readyon
+      POSTGRES_USER: readyon
+      POSTGRES_PASSWORD: readyon_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U readyon"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: readyon-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    container_name: readyon-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://readyon:readyon_dev@postgres:5432/readyon?schema=public
+      - REDIS_URL=redis://redis:6379
+      - BOT_TOKEN=${BOT_TOKEN:-9246814765:AAFMMr_VbYzKg6QY3nWmPpQ9Wo5AAZk-gus}
+      - MINI_APP_URL=${MINI_APP_URL:-http://localhost:5173}
+      - STEAM_API_KEY=${STEAM_API_KEY:-5E0EBE3E8D2CAC6B25D38C9A036FF0F5}
+      - FACEIT_API_KEY=${FACEIT_API_KEY:-f9b54d5b-7414-4697-af66-3b5503462f68}
+      - TS3_HOST=${TS3_HOST:-ekb-team.online}
+      - TS3_QUERY_PORT=${TS3_QUERY_PORT:-10011}
+      - TS3_SERVER_PORT=${TS3_SERVER_PORT:-9987}
+    volumes:
+      - ./apps/server/assets:/app/apps/server/assets
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: readyon-web
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BACKEND_URL=http://server:3000
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: readyon-tunnel
+    restart: unless-stopped
+    depends_on:
+      - web
+    command: tunnel --protocol http2 --url http://web:5173
+
+volumes:
+  pgdata:
+  redisdata:

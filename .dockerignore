@@ -1,0 +1,13 @@
+node_modules
+.git
+.github
+dist
+build
+.turbo
+*.log
+dump.rdb
+test-results
+playwright-report
+pgdata
+redisdata
+.env.local
