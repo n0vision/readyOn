@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics.js";
 import { OnboardingTour } from "../components/OnboardingTour.js";
+import { PatchnotesModal } from "../components/PatchnotesModal.js";
+import { PATCHNOTES } from "@readyon/shared";
 
 type EditPlatform = "steam" | "faceit" | "ts" | null;
 
@@ -46,6 +48,7 @@ interface NotificationSettings {
   squad_full: boolean;
   friend_cs2: boolean;
   friend_ts: boolean;
+  news: boolean;
 }
 
 const defaultSettings: NotificationSettings = {
@@ -54,6 +57,7 @@ const defaultSettings: NotificationSettings = {
   squad_full: true,
   friend_cs2: false,
   friend_ts: false,
+  news: false,
 };
 
 export function Profile() {
@@ -91,6 +95,7 @@ export function Profile() {
 
   // Onboarding tour replay state
   const [tourOpen, setTourOpen] = useState(false);
+  const [patchnotesOpen, setPatchnotesOpen] = useState(false);
 
   const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
 
@@ -619,6 +624,11 @@ export function Profile() {
             checked={notifSettings.friend_ts}
             onChange={() => handleToggleNotification("friend_ts")}
           />
+          <NotificationToggle
+            label="🔔 Рассылка обновлений и патчноутов"
+            checked={notifSettings.news}
+            onChange={() => handleToggleNotification("news")}
+          />
 
           <div className="pt-2 border-t border-white/5 flex flex-col gap-2">
             <button
@@ -664,6 +674,32 @@ export function Profile() {
               </div>
               <p className="text-xs text-[#949BA4] mt-0.5">
                 Пройти обучение по всем фичам readyOn
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#949BA4]" />
+        </div>
+
+        <div
+          onClick={() => {
+            triggerHaptic("selection");
+            setPatchnotesOpen(true);
+          }}
+          className="bg-[#2B2D31] border border-white/5 rounded-2xl p-3.5 flex items-center justify-between gap-3 hover:border-white/10 transition-all cursor-pointer shadow-sm active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#23A55A]/15 border border-[#23A55A]/30 flex items-center justify-center text-[#23A55A] shrink-0">
+              <Bell className="w-5 h-5 text-[#23A55A]" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-white flex items-center gap-1.5">
+                <span>Что нового в readyOn</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-white/90 font-mono font-semibold">
+                  v1.3.0
+                </span>
+              </div>
+              <p className="text-xs text-[#949BA4] mt-0.5">
+                История обновлений и патчноуты
               </p>
             </div>
           </div>
@@ -1163,6 +1199,24 @@ export function Profile() {
 
       {/* Interactive Onboarding Tour Modal */}
       <OnboardingTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
+
+      {/* Patchnotes Modal */}
+      <PatchnotesModal
+        isOpen={patchnotesOpen}
+        onClose={() => setPatchnotesOpen(false)}
+        onOpenTour={() => {
+          setPatchnotesOpen(false);
+          setTourOpen(true);
+        }}
+        onMarkAllAsRead={() => {
+          try {
+            const allIds = PATCHNOTES.map((p) => p.id);
+            localStorage.setItem("readyon_read_patchnotes", JSON.stringify(allIds));
+          } catch (e) {
+            console.error(e);
+          }
+        }}
+      />
     </div>
   );
 }

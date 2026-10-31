@@ -5,6 +5,7 @@ import { groupRoutes } from "./routes/groups.js";
 import { friendRoutes } from "./routes/friends.js";
 import { userRoutes } from "./routes/users.js";
 import { calendarRoutes } from "./routes/calendar.js";
+import { patchnotesRoutes } from "./routes/patchnotes.js";
 
 export async function createServer() {
   const app = Fastify({
@@ -32,6 +33,7 @@ export async function createServer() {
   await app.register(friendRoutes, { prefix: "/api/friends" });
   await app.register(userRoutes, { prefix: "/api/users" });
   await app.register(calendarRoutes, { prefix: "/api/calendar" });
+  await app.register(patchnotesRoutes, { prefix: "/api/patchnotes" });
 
   return app;
 }

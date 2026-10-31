@@ -1,13 +1,23 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Interactive Onboarding Tour", () => {
-  test("Dashboard opens onboarding tour on first visit and allows stepping through all 5 steps", async ({
+  test("Dashboard allows launching onboarding tour via news center and stepping through all 5 steps", async ({
     page,
   }) => {
     // Navigate to Dashboard
     await page.goto("http://localhost:5173/");
 
-    // Wait for the onboarding tour to automatically pop up
+    // Open Patchnotes & Help center via Bell icon
+    const bellBtn = page.locator("button[title='Новости и обновления']");
+    await expect(bellBtn).toBeVisible({ timeout: 5000 });
+    await bellBtn.click();
+
+    // Click "Запустить тур →" in the banner
+    const tourBtn = page.locator("button:has-text('Гид для новичков')");
+    await expect(tourBtn).toBeVisible();
+    await tourBtn.click();
+
+    // Tour is open
     await expect(page.locator("text=Твой статус и время старта")).toBeVisible({
       timeout: 6000,
     });
@@ -64,10 +74,9 @@ test.describe("Interactive Onboarding Tour", () => {
     );
     expect(isCompleted).toBe("true");
 
-    // Click the Header Help button to reopen the tour manually
-    const helpBtn = page.locator("button[title='Гид и обучение']");
-    await expect(helpBtn).toBeVisible();
-    await helpBtn.click();
+    // Reopen the tour via Bell -> Tour button
+    await bellBtn.click();
+    await tourBtn.click();
     await expect(page.locator("text=ШАГ 1 ИЗ 5")).toBeVisible();
 
     // Close via (X) button

@@ -60,6 +60,21 @@ async function main() {
             });
             console.log(`✅ Telegram bot menu button set to ${miniAppUrl}`);
           }
+
+          // One-time initial patchnote broadcast to all registered users
+          try {
+            const alreadySent = await redis.get("patchnote_initial_broadcast_v1.3.0");
+            if (!alreadySent) {
+              console.log("📢 Sending initial v1.3.0 patchnotes announcement to all users in bot...");
+              const result = await notificationEngine.broadcastPatchnote(undefined, true);
+              console.log(
+                `📢 Initial patchnotes broadcast finished: ${result.sent} sent, ${result.failed} failed out of ${result.total}`
+              );
+              await redis.set("patchnote_initial_broadcast_v1.3.0", "true");
+            }
+          } catch (err: any) {
+            console.warn("⚠️ Initial patchnotes broadcast error:", err.message);
+          }
         } catch (e: any) {
           console.warn("⚠️ Failed to set bot commands/menu:", e.message);
         }

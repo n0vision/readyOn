@@ -3,6 +3,7 @@ import cron from "node-cron";
 import { prisma } from "../../db/prisma.js";
 import { getToday, STATUS_EMOJI, STATUS_TEXT } from "../../bot/commands/status.js";
 import type { BotContext } from "../../bot/index.js";
+import { getLatestPatchnote, type Patchnote } from "@readyon/shared";
 
 export class NotificationEngine {
   private bot: Bot<BotContext> | null = null;
@@ -532,6 +533,82 @@ export class NotificationEngine {
         }
       }
     }
+  }
+
+  /**
+   * Broadcast patchnotes to users
+   * @param patch Patchnote to send (defaults to latest)
+   * @param forceAll If true, sends to all users (for the initial announcement); if false, sends only to users subscribed via /newson
+   */
+  async broadcastPatchnote(
+    patch: Patchnote = getLatestPatchnote(),
+    forceAll: boolean = false
+  ): Promise<{ total: number; sent: number; skipped: number; failed: number }> {
+    const allUsers = await prisma.user.findMany();
+
+    const targetUsers = forceAll
+      ? allUsers
+      : allUsers.filter((u) => {
+          const settings = (u.notificationSettings as Record<string, any>) || {};
+          return settings.news === true;
+        });
+
+    let sent = 0;
+    let failed = 0;
+    const skipped = allUsers.length - targetUsers.length;
+
+    const changesSummary = patch.changes
+      .slice(0, 4)
+      .map((c) => {
+        const icon = c.type === "new" ? "✨" : c.type === "improved" ? "⚡️" : "🛠";
+        return `${icon} *${c.title}*\n${c.description}`;
+      })
+      .join("\n\n");
+
+    const message =
+      `🚀 *Обновление readyOn ${patch.version}!*\n\n` +
+      `*${patch.title}*\n` +
+      `${patch.summary}\n\n` +
+      `───────────────\n` +
+      `${changesSummary}\n\n` +
+      `───────────────\n` +
+      (forceAll
+        ? `🔔 _Чтобы всегда первыми получать новости о будущих обновлениях, отправьте команду /newson!_`
+        : `✅ _Вы получаете это сообщение, так как подписаны на новости (/newsoff для отключения)._`);
+
+    const miniAppUrl =
+      process.env.MINI_APP_URL || "https://connectors-comparisons-divine-quilt.trycloudflare.com";
+
+    for (const user of targetUsers) {
+      const keyboard = new InlineKeyboard();
+      if (miniAppUrl.startsWith("https://")) {
+        keyboard.webApp("📱 Открыть Mini App", miniAppUrl).row();
+      }
+
+      const settings = (user.notificationSettings as Record<string, any>) || {};
+      if (settings.news === true) {
+        keyboard.text("📜 Все патчноуты", "news:view_patchnotes");
+      } else {
+        keyboard.text("🔔 Подписаться на новости", "news:subscribe");
+      }
+
+      const isSuccess = await this.sendToUser(user.telegramId, message, keyboard);
+      if (isSuccess) {
+        sent++;
+        await prisma.notificationLog.create({
+          data: {
+            userId: user.id,
+            type: `patchnote_${patch.id}`,
+            message,
+            sent: true,
+          },
+        });
+      } else {
+        failed++;
+      }
+    }
+
+    return { total: allUsers.length, sent, skipped, failed };
   }
 }
 

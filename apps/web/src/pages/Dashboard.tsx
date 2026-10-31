@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { GroupView, GroupMemberView, ReadyStatusType } from "@readyon/shared";
+import { PATCHNOTES } from "@readyon/shared";
 import {
   getCurrentTelegramId,
   fetchUserGroups,
@@ -9,9 +10,10 @@ import {
 import { StatusSelector } from "../components/StatusSelector.js";
 import { MemberCard } from "../components/MemberCard.js";
 import { getSocket } from "../services/socket.js";
-import { Crosshair, Users, ChevronDown, RefreshCw, Flame, Share2, Check, HelpCircle } from "lucide-react";
+import { Crosshair, Users, ChevronDown, RefreshCw, Flame, Share2, Check, Bell } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics.js";
 import { OnboardingTour } from "../components/OnboardingTour.js";
+import { PatchnotesModal } from "../components/PatchnotesModal.js";
 
 export function Dashboard() {
   const telegramId = getCurrentTelegramId();
@@ -23,17 +25,33 @@ export function Dashboard() {
   const [availableFrom, setAvailableFrom] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [patchnotesOpen, setPatchnotesOpen] = useState(false);
+  const [unreadNewsCount, setUnreadNewsCount] = useState(0);
 
-  useEffect(() => {
-    // Show onboarding tour automatically on first visit
-    const completed = localStorage.getItem("readyon_onboarding_completed");
-    if (!completed) {
-      const timer = setTimeout(() => {
-        setTourOpen(true);
-      }, 400);
-      return () => clearTimeout(timer);
+  const calculateUnreadNews = useCallback(() => {
+    try {
+      const stored = localStorage.getItem("readyon_read_patchnotes");
+      const readIds: string[] = stored ? JSON.parse(stored) : [];
+      const unread = PATCHNOTES.filter((p) => !readIds.includes(p.id)).length;
+      setUnreadNewsCount(unread);
+    } catch {
+      setUnreadNewsCount(PATCHNOTES.length);
     }
   }, []);
+
+  useEffect(() => {
+    calculateUnreadNews();
+  }, [calculateUnreadNews]);
+
+  const handleMarkAllNewsAsRead = () => {
+    try {
+      const allIds = PATCHNOTES.map((p) => p.id);
+      localStorage.setItem("readyon_read_patchnotes", JSON.stringify(allIds));
+      setUnreadNewsCount(0);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleCloseTour = () => {
     localStorage.setItem("readyon_onboarding_completed", "true");
@@ -201,17 +219,26 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Action buttons: Help/Tour + Refresh */}
+        {/* Action buttons: News Bell + Refresh */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => {
               triggerHaptic("selection");
-              setTourOpen(true);
+              setPatchnotesOpen(true);
             }}
-            className="w-9 h-9 rounded-xl bg-[#2B2D31] border border-white/5 flex items-center justify-center text-[#949BA4] hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
-            title="Гид и обучение"
+            className="relative w-9 h-9 rounded-xl bg-[#2B2D31] border border-white/5 flex items-center justify-center text-[#949BA4] hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
+            title="Новости и обновления"
           >
-            <HelpCircle className="w-4 h-4 text-[#8BA4CC]" />
+            <Bell
+              className={`w-4 h-4 transition-colors ${
+                unreadNewsCount > 0 ? "text-[#F2F3F5]" : "text-[#8BA4CC]"
+              }`}
+            />
+            {unreadNewsCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F23F43] text-white text-[10px] font-black flex items-center justify-center border-2 border-[#1E1F22] shadow-sm animate-pulse">
+                {unreadNewsCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -362,6 +389,14 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Patchnotes and News Modal */}
+      <PatchnotesModal
+        isOpen={patchnotesOpen}
+        onClose={() => setPatchnotesOpen(false)}
+        onOpenTour={() => setTourOpen(true)}
+        onMarkAllAsRead={handleMarkAllNewsAsRead}
+      />
 
       {/* Interactive Onboarding Tour */}
       <OnboardingTour isOpen={tourOpen} onClose={handleCloseTour} />

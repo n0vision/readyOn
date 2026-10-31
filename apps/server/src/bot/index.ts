@@ -3,6 +3,11 @@ import type { Context, SessionFlavor } from "grammy";
 import { startCommand } from "./commands/start.js";
 import { menuCommand } from "./commands/menu.js";
 import { helpCommand } from "./commands/help.js";
+import {
+  patchnotesCommand,
+  newsonCommand,
+  newsoffCommand,
+} from "./commands/patchnotes.js";
 import { statusCommand } from "./commands/status.js";
 import { groupCommand, showGroupsWithInvites } from "./commands/group.js";
 import { linkCommand, unlinkCommand } from "./commands/link.js";
@@ -23,6 +28,9 @@ export type BotContext = Context & SessionFlavor<SessionData>;
 export const BOT_COMMANDS = [
   { command: "menu", description: "Главное меню с кнопками" },
   { command: "help", description: "Полная инструкция и гид по readyOn" },
+  { command: "patchnotes", description: "Что нового в readyOn (патчноуты)" },
+  { command: "newson", description: "Подписаться на рассылку обновлений" },
+  { command: "newsoff", description: "Отключить рассылку обновлений" },
   { command: "status", description: "Кто сегодня готов играть" },
   { command: "poll", description: "Разослать опросник готовности пацанам" },
   { command: "group", description: "Твоя группа и ссылка-инвайт" },
@@ -59,6 +67,10 @@ export function createBot(): Bot<BotContext> | null {
   bot.command("menu", menuCommand);
   bot.command("help", helpCommand);
   bot.command("guide", helpCommand);
+  bot.command("patchnotes", patchnotesCommand);
+  bot.command("news", patchnotesCommand);
+  bot.command("newson", newsonCommand);
+  bot.command("newsoff", newsoffCommand);
   bot.command("ready", (ctx) => statusCommand(ctx, "READY"));
   bot.command("busy", (ctx) => statusCommand(ctx, "UNAVAILABLE"));
   bot.command("maybe", (ctx) => statusCommand(ctx, "UNLIKELY"));
@@ -84,6 +96,21 @@ export function createBot(): Bot<BotContext> | null {
   bot.callbackQuery("nav:menu", async (ctx) => {
     await ctx.answerCallbackQuery();
     await menuCommand(ctx);
+  });
+
+  bot.callbackQuery("news:subscribe", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await newsonCommand(ctx);
+  });
+
+  bot.callbackQuery("news:unsubscribe", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await newsoffCommand(ctx);
+  });
+
+  bot.callbackQuery("news:view_patchnotes", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await patchnotesCommand(ctx);
   });
 
   bot.callbackQuery("link:prompt", async (ctx) => {
