@@ -31,6 +31,7 @@ export async function generatePatchnoteBanner(
   let screenshotBase64 = "";
   const candidatePaths = [
     screenshotSourcePath,
+    "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24/player-card-cropped.png",
     "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24/player-card-expanded.png",
     "C:/Users/navla/.gemini/antigravity/brain/69960ee4-3a58-4838-bdb3-608906391c24/bell-unread-badge.png",
   ].filter(Boolean) as string[];
@@ -43,38 +44,8 @@ export async function generatePatchnoteBanner(
     }
   }
 
-  const highlightCards = patch.changes
-    .slice(0, 4)
-    .map((c) => {
-      const emoji =
-        c.shortTitle?.includes("FACEIT") || c.title.includes("FACEIT")
-          ? "🟠"
-          : c.shortTitle?.includes("ETA") || c.title.includes("ETA")
-          ? "🚗"
-          : c.shortTitle?.includes("Онбординг") || c.title.includes("Onboarding")
-          ? "🔔"
-          : "📊";
-
-      const title = c.shortTitle || c.title;
-      const subtitle = c.highlight || c.title;
-
-      return `
-        <div class="highlight-card">
-          <div class="card-icon">${emoji}</div>
-          <div class="card-texts">
-            <div class="card-title">${title}</div>
-            <div class="card-sub">${subtitle}</div>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-
-  const displayTitle =
-    patch.id === "v1.3.0"
-      ? `CS2 СТАТИСТИКА,<br /><span class="highlight-text">РЕЙТИНГ & LIVE ETA</span>`
-      : `${patch.title}`;
-
+  // Approved Layout: Variant 6-A (Flat Card Elevation)
+  // Max 6 words: "readyOn v1.3 ОБНОВЛЕНИЕ • CS2 АНАЛИТИКА И ETA"
   const html = `
     <!DOCTYPE html>
     <html>
@@ -85,236 +56,128 @@ export async function generatePatchnoteBanner(
           body {
             width: 1200px;
             height: 675px;
-            background: #111214;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #0E0F11;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             color: #FFFFFF;
             overflow: hidden;
             display: flex;
+            align-items: center;
             position: relative;
           }
-          .bg-glow-1 {
+          .bg-glow-blue {
             position: absolute;
             top: -150px;
-            left: -100px;
+            left: -120px;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(63, 95, 150, 0.45) 0%, rgba(14, 15, 17, 0) 70%);
+            pointer-events: none;
+          }
+          .bg-glow-green {
+            position: absolute;
+            bottom: -150px;
+            right: 150px;
             width: 650px;
             height: 650px;
-            background: radial-gradient(circle, rgba(63, 95, 150, 0.32) 0%, rgba(17, 18, 20, 0) 70%);
+            background: radial-gradient(circle, rgba(35, 165, 90, 0.3) 0%, rgba(14, 15, 17, 0) 70%);
             pointer-events: none;
           }
-          .bg-glow-2 {
-            position: absolute;
-            bottom: -120px;
-            right: 250px;
-            width: 550px;
-            height: 550px;
-            background: radial-gradient(circle, rgba(35, 165, 90, 0.25) 0%, rgba(17, 18, 20, 0) 70%);
-            pointer-events: none;
-          }
-          .content-left {
-            flex: 1.25;
-            padding: 50px 30px 50px 60px;
+          .left-col {
+            flex: 1.05;
+            padding-left: 70px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
             z-index: 2;
           }
-          .brand-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-          }
-          .logo-badge {
-            background: #2B2D31;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-          }
-          .app-title {
-            font-size: 28px;
-            font-weight: 900;
-            letter-spacing: -0.5px;
-          }
-          .app-title span { color: #8BA4CC; }
-          .version-pill {
-            background: #23A55A;
-            color: #FFFFFF;
-            font-size: 13px;
-            font-weight: 800;
-            padding: 5px 12px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 10px rgba(35, 165, 90, 0.4);
-          }
-          .release-date {
-            font-size: 14px;
-            color: #949BA4;
-            font-weight: 600;
-          }
-          .main-title {
-            font-size: 50px;
-            font-weight: 900;
-            line-height: 1.08;
-            color: #FFFFFF;
-            letter-spacing: -1.2px;
-            margin-top: 18px;
-            text-transform: uppercase;
-          }
-          .main-title .highlight-text {
-            color: #8BA4CC;
-            display: inline-block;
-          }
-          .summary-text {
-            font-size: 17px;
-            color: #949BA4;
-            font-weight: 500;
-            line-height: 1.4;
-            margin-top: 10px;
-            max-width: 580px;
-          }
-          .highlights-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-top: 24px;
-          }
-          .highlight-card {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            background: rgba(43, 45, 49, 0.75);
-            border: 1.5px solid rgba(255, 255, 255, 0.1);
-            padding: 14px 18px;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-          }
-          .card-icon {
-            font-size: 30px;
-            line-height: 1;
-            flex-shrink: 0;
-          }
-          .card-texts {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            overflow: hidden;
-          }
-          .card-title {
-            color: #FFFFFF;
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-          .card-sub {
-            color: #8BA4CC;
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-          .footer-note {
-            display: flex;
+          .top-badge {
+            display: inline-flex;
             align-items: center;
             gap: 12px;
-            font-size: 15px;
-            color: #DBDEE1;
-            font-weight: 600;
+            margin-bottom: 24px;
           }
-          .bot-badge {
-            background: #2B2D31;
-            border: 1px solid #3F5F96;
+          .top-badge .brand {
+            font-size: 28px;
+            font-weight: 950;
+            color: #FFF;
+            letter-spacing: -0.5px;
+          }
+          .top-badge .brand span {
             color: #8BA4CC;
-            font-weight: 800;
-            font-size: 13px;
-            padding: 4px 10px;
-            border-radius: 8px;
           }
-          .content-right {
-            flex: 0.95;
+          .top-badge .upd {
+            background: rgba(35, 165, 90, 0.2);
+            border: 1.5px solid #23A55A;
+            color: #23A55A;
+            font-size: 13px;
+            font-weight: 900;
+            padding: 5px 14px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+          }
+          .hero-big {
+            font-size: 78px;
+            font-weight: 950;
+            line-height: 0.98;
+            letter-spacing: -2.8px;
+            text-transform: uppercase;
+            color: #FFFFFF;
+          }
+          .hero-accent {
+            font-size: 62px;
+            font-weight: 950;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #8BA4CC 0%, #3F5F96 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 14px;
+          }
+          .right-col {
+            flex: 1.25;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 30px 50px 30px 10px;
+            padding: 30px 60px 30px 20px;
             z-index: 2;
           }
-          .phone-frame {
-            width: 300px;
-            height: 575px;
+          .card-frame-flat {
+            width: 530px;
             background: #1E1F22;
-            border: 6px solid #2B2D31;
-            border-radius: 40px;
-            box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.9), 0 0 50px rgba(63, 95, 150, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-radius: 28px;
+            box-shadow: 0 35px 80px rgba(0, 0, 0, 0.95), 0 0 50px rgba(63, 95, 150, 0.35);
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            display: block;
           }
-          .phone-notch {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 85px;
-            height: 18px;
-            background: #111214;
-            border-radius: 10px;
-            z-index: 10;
-          }
-          .phone-screenshot {
+          .card-img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: top center;
+            height: auto;
+            display: block;
           }
         </style>
       </head>
       <body>
-        <div class="bg-glow-1"></div>
-        <div class="bg-glow-2"></div>
+        <div class="bg-glow-blue"></div>
+        <div class="bg-glow-green"></div>
 
-        <div class="content-left">
-          <div>
-            <div class="brand-row">
-              <div class="logo-badge">🎯</div>
-              <div>
-                <div class="app-title">ready<span>On</span></div>
-              </div>
-              <div class="version-pill">${patch.version} ${patch.badge || "UPDATE"}</div>
-              <div class="release-date">${patch.date}</div>
-            </div>
-
-            <h1 class="main-title">${displayTitle}</h1>
-            <p class="summary-text">${patch.summary}</p>
-
-            <div class="highlights-grid">
-              ${highlightCards}
-            </div>
+        <div class="left-col">
+          <div class="top-badge">
+            <span class="brand">🎯 ready<span>On</span> ${patch.version}</span>
+            <span class="upd">ОБНОВЛЕНИЕ</span>
           </div>
 
-          <div class="footer-note">
-            <div class="bot-badge">💬 /newson</div>
-            <span>Подробности обновления описаны в посте</span>
-          </div>
+          <h1 class="hero-big">CS2 АНАЛИТИКА</h1>
+          <div class="hero-accent">И ETA</div>
         </div>
 
-        <div class="content-right">
-          <div class="phone-frame">
-            <div class="phone-notch"></div>
+        <div class="right-col">
+          <div class="card-frame-flat">
             ${
               screenshotBase64
-                ? `<img class="phone-screenshot" src="${screenshotBase64}" alt="App Preview" />`
-                : `<div style="padding: 20px; color: #8BA4CC; text-align: center; font-size: 13px;">readyOn App</div>`
+                ? `<img class="card-img" src="${screenshotBase64}" alt="Feature Preview" />`
+                : `<div style="padding: 40px; color: #8BA4CC; text-align: center; font-size: 16px;">readyOn App</div>`
             }
           </div>
         </div>

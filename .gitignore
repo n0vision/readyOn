@@ -34,3 +34,4 @@ apps/server/prisma/migrations/
 # Docker volumes
 pgdata/
 redisdata/
+dump.rdb
